@@ -16,11 +16,22 @@ if [[ $BRANCH_OVERRIDE == "stable/kilo" || $BRANCH_OVERRIDE == "stable/liberty" 
     PXB_VERSION_OVERRIDE="-22"
 fi
 
-export DEBIAN_FRONTEND="noninteractive"
-debconf-set-selections <<< "mysql-server mysql-server/root_password password rootpw"
-debconf-set-selections <<< "mysql-server mysql-server/root_password_again password rootpw"
+export DEBIAN_FRONTEND=noninteractive
 
-apt-get --allow-unauthenticated -y install libmysqlclient18 mysql-server-5.7 percona-xtrabackup${PXB_VERSION_OVERRIDE}
+debconf-set-selections <<< 'mysql-apt-config mysql-apt-config/repo-codename select trusty'
+debconf-set-selections <<< 'mysql-apt-config mysql-apt-config/repo-distro select ubuntu'
+debconf-set-selections <<< 'mysql-apt-config mysql-apt-config/repo-url string http://repo.mysql.com/apt/'
+debconf-set-selections <<< 'mysql-apt-config mysql-apt-config/select-preview select '
+debconf-set-selections <<< 'mysql-apt-config mysql-apt-config/select-product select Ok'
+debconf-set-selections <<< 'mysql-apt-config mysql-apt-config/select-server select mysql-5.7'
+debconf-set-selections <<< 'mysql-apt-config mysql-apt-config/select-tools select '
+debconf-set-selections <<< 'mysql-apt-config mysql-apt-config/unsupported-platform select abort'
+
+wget http://dev.mysql.com/get/mysql-apt-config_0.7.2-1_all.deb
+dpkg -i mysql-apt-config_0.7.2-1_all.deb
+apt-get update
+
+apt-get --allow-unauthenticated -y install libmysqlclient18 mysql-server percona-xtrabackup${PXB_VERSION_OVERRIDE}
 
 cat >/etc/mysql/conf.d/no_perf_schema.cnf <<_EOF_
 [mysqld]
