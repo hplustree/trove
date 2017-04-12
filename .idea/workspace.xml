@@ -2,16 +2,17 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1e5f855d-5815-443c-8711-98a6d8f1d2ad" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-mariadb-10.1/element-deps" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-mariadb-10.1/install.d/30-mariadb" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-postgresql-9.4/element-deps" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-postgresql-9.4/install.d/31-fix-init-script" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-pxc-5.6/element-deps" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-pxc-5.6/install.d/31-fix-my-cnf" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-redis-3.2.6/element-deps" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-redis-3.2.6/install.d/31-fix-init-file" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-cassandra-2.1.0/element-deps" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-couchbase-2.2.0/element-deps" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-couchdb-1.6.1/element-deps" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mariadb-10.1/element-deps" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mariadb-10.1/install.d/30-mariadb" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mongodb-3.2/element-deps" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-percona-5.6/element-deps" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-postgresql-9.4/element-deps" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-pxc-5.6/element-deps" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-redis-3.2.6/element-deps" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mysql-5.7/install.d/30-mysql" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mysql-5.7/install.d/30-mysql" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -23,98 +24,98 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="localrc.rc" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/integration/scripts/localrc.rc">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="250">
-              <caret line="21" column="7" lean-forward="false" selection-start-line="21" selection-start-column="7" selection-end-line="21" selection-end-column="7" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="local.conf.rc" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/integration/scripts/local.conf.rc">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="projects-list" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/integration/scripts/projects-list">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="trovestack" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/integration/scripts/trovestack">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1453">
-              <caret line="67" column="27" lean-forward="false" selection-start-line="67" selection-start-column="27" selection-end-line="67" selection-end-column="27" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="30-mysql" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mysql-5.7/install.d/30-mysql">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="240">
-              <caret line="16" column="2" lean-forward="false" selection-start-line="16" selection-start-column="2" selection-end-line="16" selection-end-column="2" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="30-mariadb" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-mariadb/install.d/30-mariadb">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="315">
-              <caret line="21" column="0" lean-forward="true" selection-start-line="21" selection-start-column="0" selection-end-line="22" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="30-mariadb" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-mariadb-10.1/install.d/30-mariadb">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="31-fix-init-script" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-postgresql-9.4/install.d/31-fix-init-script">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="31-fix-my-cnf" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-pxc-5.6/install.d/31-fix-my-cnf">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="31-fix-init-file" pinned="false" current-in-tab="true">
+      <file leaf-file-name="31-fix-init-file" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-redis-3.2.6/install.d/31-fix-init-file">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="element-deps" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-cassandra-2.1.0/element-deps">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="element-deps" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-couchbase-2.2.0/element-deps">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="element-deps" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-couchdb-1.6.1/element-deps">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="30-mariadb" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mariadb-10.1/install.d/30-mariadb">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="element-deps" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mongodb-3.2/element-deps">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="element-deps" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-percona-5.6/element-deps">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="element-deps" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-postgresql-9.4/element-deps">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="element-deps" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-pxc-5.6/element-deps">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="element-deps" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-redis-3.2.6/element-deps">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="0">
               <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
@@ -189,6 +190,9 @@
   <component name="ProjectFrameBounds">
     <option name="width" value="1440" />
     <option name="height" value="896" />
+  </component>
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
   </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
@@ -311,6 +315,7 @@
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/integration/scripts/files/elements/" />
+      <recent name="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-couchbase" />
       <recent name="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-postgresql" />
       <recent name="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-mysql" />
     </key>
@@ -525,82 +530,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/trove/taskmanager/models.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="353">
-          <caret line="462" column="23" lean-forward="false" selection-start-line="462" selection-start-column="8" selection-end-line="462" selection-end-column="23" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/trove/taskmanager/manager.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="128">
-          <caret line="368" column="23" lean-forward="false" selection-start-line="368" selection-start-column="8" selection-end-line="368" selection-end-column="23" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/trove/extensions/mgmt/instances/models.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="258">
-          <caret line="81" column="49" lean-forward="true" selection-start-line="81" selection-start-column="49" selection-end-line="81" selection-end-column="49" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/trove/common/strategies/cluster/experimental/vertica/api.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="431">
-          <caret line="118" column="33" lean-forward="false" selection-start-line="118" selection-start-column="33" selection-end-line="118" selection-end-column="33" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/trove/common/extensions.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="250">
-          <caret line="506" column="8" lean-forward="false" selection-start-line="506" selection-start-column="8" selection-end-line="506" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/trove/extensions/routes/mgmt.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="310">
-          <caret line="63" column="37" lean-forward="false" selection-start-line="63" selection-start-column="37" selection-end-line="63" selection-end-column="37" />
-          <folding>
-            <element signature="e#636#671#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/trove/extensions/mgmt/host/service.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="405">
-          <caret line="27" column="31" lean-forward="false" selection-start-line="27" selection-start-column="31" selection-end-line="27" selection-end-column="31" />
-          <folding>
-            <element signature="e#636#671#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/trove/instance/service.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3750">
-          <caret line="273" column="25" lean-forward="false" selection-start-line="273" selection-start-column="19" selection-end-line="273" selection-end-column="25" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/trove/guestagent/datastore/galera_common/manager.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="525">
-          <caret line="39" column="10" lean-forward="false" selection-start-line="39" selection-start-column="10" selection-end-line="39" selection-end-column="10" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/trove/guestagent/datastore/manager.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3885">
@@ -939,6 +868,78 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-redis-3.2.6/install.d/31-fix-init-file">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-cassandra-2.1.0/element-deps">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-couchbase-2.2.0/element-deps">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-couchdb-1.6.1/element-deps">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mariadb-10.1/install.d/30-mariadb">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mongodb-3.2/element-deps">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-percona-5.6/element-deps">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-postgresql-9.4/element-deps">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-pxc-5.6/element-deps">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-redis-3.2.6/element-deps">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
