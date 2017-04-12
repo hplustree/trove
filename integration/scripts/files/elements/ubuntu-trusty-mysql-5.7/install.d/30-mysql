@@ -17,8 +17,8 @@ if [[ $BRANCH_OVERRIDE == "stable/kilo" || $BRANCH_OVERRIDE == "stable/liberty" 
 fi
 
 export DEBIAN_FRONTEND="noninteractive"
-sudo debconf-set-selections <<< "mysql-server mysql-server/root_password password rootpw"
-sudo debconf-set-selections <<< "mysql-server mysql-server/root_password_again password rootpw"
+debconf-set-selections <<< "mysql-server mysql-server/root_password password rootpw"
+debconf-set-selections <<< "mysql-server mysql-server/root_password_again password rootpw"
 
 apt-get --allow-unauthenticated -y install libmysqlclient18 mysql-server-5.7 percona-xtrabackup${PXB_VERSION_OVERRIDE}
 
