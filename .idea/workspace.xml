@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="1e5f855d-5815-443c-8711-98a6d8f1d2ad" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-mysql-5.5/element-deps" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-mysql-5.5/install.d/30-mysql" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-mysql-5.6/element-deps" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-mysql-5.6/install.d/30-mysql" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-mysql-5.7/element-deps" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-xenial-mysql-5.7/install.d/30-mysql" />
-    </list>
+    <list default="true" id="1e5f855d-5815-443c-8711-98a6d8f1d2ad" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
