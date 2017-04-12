@@ -2,15 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1e5f855d-5815-443c-8711-98a6d8f1d2ad" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/fedora-22-mariadb-10.1/README.md" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/fedora-22-mariadb-10.1/install.d/10-mariadb" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/fedora-22-mariadb-10.1/pre-install.d/10-percona-copr" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/fedora-22-mongodb-3.2/README.md" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/fedora-22-mongodb-3.2/install.d/10-mongodb" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/fedora-22-mongodb-3.2/install.d/25-trove-mongo-dep" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/fedora-22-redis-3.0/README.md" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/fedora-22-redis-3.0/install.d/10-redis" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/integration/scripts/files/elements/fedora-22-redis-3.0/README.md" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/integration/scripts/files/elements/fedora-22-redis-3.0/install.d/10-redis" afterPath="" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/integration/scripts/files/elements/fedora-22-redis-3.0/README.md" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/fedora-redis-3.2.6/README.md" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/integration/scripts/files/elements/fedora-22-redis-3.0/install.d/10-redis" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/fedora-redis-3.2.6/install.d/10-redis" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -113,7 +108,7 @@
         </entry>
       </file>
       <file leaf-file-name="10-redis" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/fedora-22-redis-3.0/install.d/10-redis">
+        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/fedora-redis-3.2.6/install.d/10-redis">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="0">
               <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
@@ -581,14 +576,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/integration/scripts/create_vm">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-281">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mysql-5.7/install.d/30-mysql">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="240">
@@ -982,6 +969,14 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/fedora-22-redis-3.0/install.d/10-redis">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/fedora-redis-3.2.6/install.d/10-redis">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
