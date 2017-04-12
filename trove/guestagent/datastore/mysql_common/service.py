@@ -314,6 +314,7 @@ class BaseMySqlAdmin(object):
                                     clear=user.password)
                 t = text(str(g))
                 client.execute(t)
+                client.execute(FLUSH)
                 for database in user.databases:
                     mydb = models.MySQLSchema.deserialize(database)
                     g = sql_query.Grant(permissions='ALL', database=mydb.name,
@@ -321,6 +322,7 @@ class BaseMySqlAdmin(object):
                                         clear=user.password)
                     t = text(str(g))
                     client.execute(t)
+                    client.execute(FLUSH)
 
     def delete_database(self, database):
         """Delete the specified database."""
@@ -662,6 +664,7 @@ class BaseMySqlApp(object):
                             host=localhost, grant_option=True, clear=password)
         t = text(str(g))
         client.execute(t)
+        client.execute(FLUSH)
         LOG.debug("Trove admin user '%s' created." % ADMIN_USER_NAME)
 
     @staticmethod
