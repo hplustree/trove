@@ -22,7 +22,6 @@ environments if we choose to.
 """
 
 from collections import Mapping
-from datetime import datetime
 import json
 import os
 
@@ -193,7 +192,7 @@ class TestConfig(object):
 class PrintReporter(object):
 
     def log(self, msg):
-        print("%s [REPORT] %s" % (str(datetime.now()), msg))
+        print("[REPORT] %s" % msg)
 
     def update(self):
         pass  # Ignore. This is used in other reporters.
