@@ -6,7 +6,8 @@
 set -e
 set -o xtrace
 
-dnf -y install https://repo.mysql.com/mysql56-community-release-fc22.rpm
+dnf -y install https://repo.mysql.com/mysql-community-release-fc22-5.noarch.rpm
+dnf config-manager --disablerepo mysql57-community-dmr
 dnf -y install mysql-community-server
 
 # move the config dir for now but leave /etc/my.cnf alone
@@ -14,3 +15,6 @@ dnf -y install mysql-community-server
 mkdir /etc/mysql
 mv /etc/my.cnf.d /etc/mysql/conf.d
 chown -R mysql:mysql /etc/mysql
+
+
+
