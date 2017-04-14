@@ -54,7 +54,7 @@ class VolumeDevice(object):
         if target_subdir:
             target_dir = target_dir + "/" + target_subdir
         try:
-            utils.execute("rsync", "--safe-links", "--perms",
+            utils.execute("rsync", "--safe-links", "-v", "--perms",
                           "--recursive", "--owner", "--group", "--xattrs",
                           "--sparse", source_dir, target_dir,
                           run_as_root=True, root_helper="sudo")
