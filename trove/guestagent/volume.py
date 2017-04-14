@@ -47,7 +47,7 @@ class VolumeDevice(object):
         target_dir = TMP_MOUNT_POINT
         if target_subdir:
             target_dir = target_dir + "/" + target_subdir
-        utils.execute("sudo", "rsync", "--safe-links", "--perms",
+        utils.execute("sudo", "rsync", "-v","--safe-links", "--perms",
                       "--recursive", "--owner", "--group", "--xattrs",
                       "--sparse", source_dir, target_dir)
         self.unmount(TMP_MOUNT_POINT)
