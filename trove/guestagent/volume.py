@@ -94,7 +94,7 @@ class VolumeDevice(object):
         """Calls mkfs to format the device at device_path."""
         volume_fstype = CONF.volume_fstype
         format_options = CONF.format_options
-        cmd = "sudo mkfs -t %s %s %s" % (volume_fstype,
+        cmd = "sudo mkfs -t -F %s %s %s" % (volume_fstype,
                                          format_options, self.device_path)
         volume_format_timeout = CONF.volume_format_timeout
         LOG.debug("Formatting %s. Executing: %s." %
