@@ -48,7 +48,7 @@ class VolumeDevice(object):
         if target_subdir:
             target_dir = target_dir + "/" + target_subdir
         utils.execute("sudo", "rsync", "-v","--safe-links", "--perms",
-                      "--recursive", "--no-g", "--xattrs",
+                      "--recursive", "--owner", "--group", "--xattrs",
                       "--sparse", source_dir, target_dir)
         self.unmount(TMP_MOUNT_POINT)
 
@@ -94,7 +94,7 @@ class VolumeDevice(object):
         """Calls mkfs to format the device at device_path."""
         volume_fstype = CONF.volume_fstype
         format_options = CONF.format_options
-        cmd = "sudo mkfs -t -F %s %s %s" % (volume_fstype,
+        cmd = "sudo mkfs -t  %s %s %s -F" % (volume_fstype,
                                          format_options, self.device_path)
         volume_format_timeout = CONF.volume_format_timeout
         LOG.debug("Formatting %s. Executing: %s." %
