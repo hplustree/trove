@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1e5f855d-5815-443c-8711-98a6d8f1d2ad" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-redis-3.2.6/install.d/40-redis" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-redis-3.2.6/install.d/40-redis" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/integration/scripts/files/trove-guest.systemd.conf" afterPath="$PROJECT_DIR$/integration/scripts/files/trove-guest.systemd.conf" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -34,21 +34,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="trove-guest.systemd.conf" pinned="false" current-in-tab="false">
+      <file leaf-file-name="trove-guest.systemd.conf" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/integration/scripts/files/trove-guest.systemd.conf">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="285">
-              <caret line="19" column="0" lean-forward="true" selection-start-line="19" selection-start-column="0" selection-end-line="19" selection-end-column="0" />
+            <state relative-caret-position="165">
+              <caret line="11" column="0" lean-forward="true" selection-start-line="11" selection-start-column="0" selection-end-line="11" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="40-redis" pinned="false" current-in-tab="true">
+      <file leaf-file-name="40-redis" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-redis-3.2.6/install.d/40-redis">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="150">
-              <caret line="10" column="28" lean-forward="false" selection-start-line="10" selection-start-column="28" selection-end-line="10" selection-end-column="28" />
+            <state relative-caret-position="405">
+              <caret line="27" column="19" lean-forward="true" selection-start-line="27" selection-start-column="19" selection-end-line="27" selection-end-column="19" />
               <folding />
             </state>
           </provider>
@@ -117,8 +117,8 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/integration/scripts/files/trove-guest.systemd.conf" />
         <option value="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-redis-3.2.6/install.d/40-redis" />
+        <option value="$PROJECT_DIR$/integration/scripts/files/trove-guest.systemd.conf" />
       </list>
     </option>
   </component>
@@ -1073,18 +1073,18 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/integration/scripts/files/trove-guest.systemd.conf">
+    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-redis-3.2.6/install.d/40-redis">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="285">
-          <caret line="19" column="0" lean-forward="true" selection-start-line="19" selection-start-column="0" selection-end-line="19" selection-end-column="0" />
+        <state relative-caret-position="405">
+          <caret line="27" column="19" lean-forward="true" selection-start-line="27" selection-start-column="19" selection-end-line="27" selection-end-column="19" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-redis-3.2.6/install.d/40-redis">
+    <entry file="file://$PROJECT_DIR$/integration/scripts/files/trove-guest.systemd.conf">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="10" column="28" lean-forward="false" selection-start-line="10" selection-start-column="28" selection-end-line="10" selection-end-column="28" />
+        <state relative-caret-position="165">
+          <caret line="11" column="0" lean-forward="true" selection-start-line="11" selection-start-column="0" selection-end-line="11" selection-end-column="0" />
           <folding />
         </state>
       </provider>
