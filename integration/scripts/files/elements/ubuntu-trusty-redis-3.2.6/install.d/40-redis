@@ -8,7 +8,7 @@ sudo pip install redis
 
 
 
-cat > "/etc/systemd/system/redis-server.service" << _EOF_
+cat > "/etc/redis/redis.conf" << _EOF_
 
 bind 0.0.0.0
 protected-mode yes

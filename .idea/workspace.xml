@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1e5f855d-5815-443c-8711-98a6d8f1d2ad" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/integration/scripts/files/trove-guest.systemd.conf" afterPath="$PROJECT_DIR$/integration/scripts/files/trove-guest.systemd.conf" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-redis-3.2.6/install.d/40-redis" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-redis-3.2.6/install.d/40-redis" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -34,7 +34,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="trove-guest.systemd.conf" pinned="false" current-in-tab="true">
+      <file leaf-file-name="trove-guest.systemd.conf" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/integration/scripts/files/trove-guest.systemd.conf">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="285">
@@ -44,11 +44,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="40-redis" pinned="false" current-in-tab="false">
+      <file leaf-file-name="40-redis" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-redis-3.2.6/install.d/40-redis">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="240">
-              <caret line="16" column="17" lean-forward="false" selection-start-line="16" selection-start-column="17" selection-end-line="16" selection-end-column="17" />
+            <state relative-caret-position="150">
+              <caret line="10" column="28" lean-forward="false" selection-start-line="10" selection-start-column="28" selection-end-line="10" selection-end-column="28" />
               <folding />
             </state>
           </provider>
@@ -117,8 +117,8 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-redis-3.2.6/install.d/40-redis" />
         <option value="$PROJECT_DIR$/integration/scripts/files/trove-guest.systemd.conf" />
+        <option value="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-redis-3.2.6/install.d/40-redis" />
       </list>
     </option>
   </component>
@@ -1033,14 +1033,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-redis-3.2.6/install.d/40-redis">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="240">
-          <caret line="16" column="17" lean-forward="false" selection-start-line="16" selection-start-column="17" selection-end-line="16" selection-end-column="17" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-postgresql-9.4/element-deps">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -1085,6 +1077,14 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="285">
           <caret line="19" column="0" lean-forward="true" selection-start-line="19" selection-start-column="0" selection-end-line="19" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-redis-3.2.6/install.d/40-redis">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="150">
+          <caret line="10" column="28" lean-forward="false" selection-start-line="10" selection-start-column="28" selection-end-line="10" selection-end-column="28" />
           <folding />
         </state>
       </provider>
