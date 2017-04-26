@@ -141,7 +141,7 @@
         <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mariadb-10.1/install.d/30-mariadb">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="510">
-              <caret line="34" column="13" lean-forward="false" selection-start-line="34" selection-start-column="13" selection-end-line="34" selection-end-column="13" />
+              <caret line="34" column="0" lean-forward="true" selection-start-line="34" selection-start-column="0" selection-end-line="34" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -1197,7 +1197,7 @@
     <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mariadb-10.1/install.d/30-mariadb">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="510">
-          <caret line="34" column="13" lean-forward="false" selection-start-line="34" selection-start-column="13" selection-end-line="34" selection-end-column="13" />
+          <caret line="34" column="0" lean-forward="true" selection-start-line="34" selection-start-column="0" selection-end-line="34" selection-end-column="0" />
           <folding />
         </state>
       </provider>

@@ -32,7 +32,7 @@ rm -rf /lib/systemd/system/mariadb*
 cat /etc/init.d/mysql  >> /etc/init.d/mariadb
 chmod +x /etc/init.d/mariadb
 /etc/init.d/mariadb stop
-service mysql start
+
 
 
 cat >/etc/mysql/conf.d/no_perf_schema.cnf <<_EOF_
