@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1e5f855d-5815-443c-8711-98a6d8f1d2ad" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mariadb-10.1/install.d/30-mariadb" afterPath="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mariadb-10.1/install.d/30-mariadb" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/trove/guestagent/datastore/mysql_common/service.py" afterPath="$PROJECT_DIR$/trove/guestagent/datastore/mysql_common/service.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -14,109 +14,6 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="volume.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/trove/guestagent/volume.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="406">
-              <caret line="56" column="0" lean-forward="true" selection-start-line="56" selection-start-column="0" selection-end-line="59" selection-end-column="63" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="service.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/trove/guestagent/datastore/mysql_common/service.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="278">
-              <caret line="785" column="24" lean-forward="false" selection-start-line="785" selection-start-column="24" selection-end-line="785" selection-end-column="24" />
-              <folding>
-                <marker date="1493193428000" expanded="true" signature="18905:19262" ph="SELECT User,... User" />
-                <marker date="1493193428000" expanded="true" signature="18993:19147" ph="SELECT User,... user" />
-                <marker date="1493193428000" expanded="true" signature="23122:41909" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="31017:31731" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="31146:31269" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="31293:31411" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="31584:31731" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="31778:31935" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="31986:32137" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="32161:32327" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="32174:32272" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="32371:32417" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="32466:32710" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="32475:32562" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="32584:32710" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="32753:33440" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="32868:33440" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="32979:33440" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="33247:33440" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="33345:33429" ph="&quot;...&quot;" />
-                <marker date="1493193428000" expanded="true" signature="33482:33644" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="33547:33644" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="33677:34631" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="33686:33907" ph="&quot;&quot;&quot;Destroys the iblogfiles....&quot;&quot;&quot;" />
-                <marker date="1493193428000" expanded="true" signature="33981:34631" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="33998:34495" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="34015:34299" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="34547:34631" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="34664:34722" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="34778:34939" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="34991:35065" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="35132:35274" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="35342:35483" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="35535:35605" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="35658:35727" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="35789:36247" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="35989:36247" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="36272:36427" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="36337:36427" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="36463:36766" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="36528:36766" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="36626:36730" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="36815:36984" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="37012:37228" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="37128:37228" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="37269:37854" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="37417:37778" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="37795:37853" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="37882:38042" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="38107:38783" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="38143:38316" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="38402:38581" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="38609:38783" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="38719:38781" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="38864:40658" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="38912:39108" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="39248:39388" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="39525:39927" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="39538:39910" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="40099:40658" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="40166:40285" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="40429:40560" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="40718:41243" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="40919:41113" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="40944:41041" ph="&quot;...&quot;" />
-                <marker date="1493193428000" expanded="true" signature="41294:41452" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="41505:41909" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="41665:41848" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="41946:44249" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="42000:42086" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="42126:42157" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="42204:42242" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="42274:42620" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="42419:42620" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="42668:44107" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="42677:42769" ph="&quot;&quot;&quot;...&quot;&quot;&quot;" />
-                <marker date="1493193428000" expanded="true" signature="42905:43323" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="42922:43073" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="43142:43323" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="43159:43292" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="43398:44107" ph="..." />
-                <marker date="1493193428000" expanded="true" signature="44136:44249" ph="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="operating_system.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/trove/guestagent/common/operating_system.py">
           <provider selected="true" editor-type-id="text-editor">
@@ -137,7 +34,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="30-mariadb" pinned="false" current-in-tab="true">
+      <file leaf-file-name="30-mariadb" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mariadb-10.1/install.d/30-mariadb">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="510">
@@ -147,11 +44,110 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="30-mysql" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mysql-5.5/install.d/30-mysql">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="270">
+              <caret line="18" column="0" lean-forward="true" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="element-deps" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mysql-5.5/element-deps">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="10-percona-apt-key" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-mysql/pre-install.d/10-percona-apt-key">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="20-apparmor-mysql-local" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-mysql/pre-install.d/20-apparmor-mysql-local">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="mysql_impl.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/trove/guestagent/strategies/restore/mysql_impl.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="233">
+              <caret line="155" column="16" lean-forward="false" selection-start-line="155" selection-start-column="11" selection-end-line="155" selection-end-column="16" />
+              <folding>
+                <element signature="e#659#670#0" expanded="true" />
+                <marker date="1492588033000" expanded="true" signature="1548:1750" ph="UPDATE `mysq... " />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="sql_query.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/trove/guestagent/common/sql_query.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="290">
+              <caret line="406" column="23" lean-forward="true" selection-start-line="406" selection-start-column="23" selection-end-line="406" selection-end-column="23" />
+              <folding>
+                <marker date="1492151612000" expanded="true" signature="11410:11500" ph="SELECT User user" />
+                <marker date="1492151612000" expanded="true" signature="11519:11557" ph="DELETE FROM " />
+                <marker date="1492151612000" expanded="true" signature="11576:11660" ph="DELETE FROM " />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="service.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/trove/guestagent/datastore/mysql_common/service.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="233">
+              <caret line="894" column="61" lean-forward="false" selection-start-line="894" selection-start-column="54" selection-end-line="894" selection-end-column="61" />
+              <folding>
+                <marker date="1493210862000" expanded="true" signature="18905:19262" ph="SELECT User,... User" />
+                <marker date="1493210862000" expanded="true" signature="18993:19147" ph="SELECT User,... user" />
+                <marker date="1493210862000" expanded="true" signature="31146:31269" ph="..." />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
     </leaf>
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
       <find>trove-installed</find>
+      <find>systemctl enable</find>
+      <find>flush</find>
+      <find>F</find>
+      <find>FLUS</find>
+      <find>FLUSH_{</find>
+      <find>FLUSH_PR</find>
+      <find>FLUSH_P</find>
+      <find>FLUSH_</find>
+      <find>FLUSH</find>
+      <find>FLUSH P</find>
+      <find>FLUSH PRE</find>
+      <find>FLUSH PR</find>
+      <find>FLUSH PRI</find>
+      <find>3  trove/guestagent/datastore/mysql_common/service.py</find>
+      <find>FLUSH</find>
+      <find>repli</find>
+      <find>privi</find>
+      <find>replica</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -163,6 +159,7 @@
         <option value="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-redis-3.2.6/install.d/40-redis" />
         <option value="$PROJECT_DIR$/integration/scripts/files/trove-guest.systemd.conf" />
         <option value="$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mariadb-10.1/install.d/30-mariadb" />
+        <option value="$PROJECT_DIR$/trove/guestagent/datastore/mysql_common/service.py" />
       </list>
     </option>
   </component>
@@ -482,6 +479,70 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
+              <option name="myItemId" value="ubuntu-trusty-mysql-5.5" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="trove" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="trove" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="integration" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="scripts" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="files" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="elements" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ubuntu-trusty-mysql-5.5" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="install.d" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="trove" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="trove" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="integration" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="scripts" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="files" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="elements" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
               <option name="myItemId" value="ubuntu-trusty-mariadb-10.1" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
@@ -581,6 +642,70 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="install.d" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="trove" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="trove" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="integration" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="scripts" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="files" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="elements" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ubuntu-mysql" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="trove" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="trove" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="integration" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="scripts" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="files" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="elements" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ubuntu-mysql" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="pre-install.d" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -871,55 +996,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/integration/scripts/files/requirements/fedora-requirements.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/integration/scripts/files/trove-guest.upstart.conf">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/integration/scripts/functions">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/integration/scripts/functions_qemu">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1519">
-          <caret line="21" column="26" lean-forward="false" selection-start-line="21" selection-start-column="15" selection-end-line="21" selection-end-column="26" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/integration/scripts/image-projects-list">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/integration/scripts/local.conf.rc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/integration/scripts/localrc.rc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-34">
-          <caret line="21" column="7" lean-forward="false" selection-start-line="21" selection-start-column="7" selection-end-line="21" selection-end-column="7" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/integration/scripts/projects-list">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -1199,6 +1275,73 @@
         <state relative-caret-position="510">
           <caret line="34" column="0" lean-forward="true" selection-start-line="34" selection-start-column="0" selection-end-line="34" selection-end-column="0" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mysql-5.5/install.d/30-mysql">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="18" column="0" lean-forward="true" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-trusty-mysql-5.5/element-deps">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-mysql/pre-install.d/10-percona-apt-key">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/integration/scripts/files/elements/ubuntu-mysql/pre-install.d/20-apparmor-mysql-local">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/trove/guestagent/strategies/restore/mysql_impl.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="233">
+          <caret line="155" column="16" lean-forward="false" selection-start-line="155" selection-start-column="11" selection-end-line="155" selection-end-column="16" />
+          <folding>
+            <element signature="e#659#670#0" expanded="true" />
+            <marker date="1492588033000" expanded="true" signature="1548:1750" ph="UPDATE `mysq... " />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/trove/guestagent/common/sql_query.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="290">
+          <caret line="406" column="23" lean-forward="true" selection-start-line="406" selection-start-column="23" selection-end-line="406" selection-end-column="23" />
+          <folding>
+            <marker date="1492151612000" expanded="true" signature="11410:11500" ph="SELECT User user" />
+            <marker date="1492151612000" expanded="true" signature="11519:11557" ph="DELETE FROM " />
+            <marker date="1492151612000" expanded="true" signature="11576:11660" ph="DELETE FROM " />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/trove/guestagent/datastore/mysql_common/service.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="233">
+          <caret line="894" column="61" lean-forward="false" selection-start-line="894" selection-start-column="54" selection-end-line="894" selection-end-column="61" />
+          <folding>
+            <marker date="1493210862000" expanded="true" signature="18905:19262" ph="SELECT User,... User" />
+            <marker date="1493210862000" expanded="true" signature="18993:19147" ph="SELECT User,... user" />
+            <marker date="1493210862000" expanded="true" signature="31146:31269" ph="..." />
+          </folding>
         </state>
       </provider>
     </entry>

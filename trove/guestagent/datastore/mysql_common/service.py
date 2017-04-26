@@ -901,6 +901,7 @@ class BaseMySqlApp(object):
 
             t = text(str(g))
             client.execute(t)
+            client.execute(FLUSH)
 
     def get_port(self):
         with self.local_sql_client(self.get_engine()) as client:
