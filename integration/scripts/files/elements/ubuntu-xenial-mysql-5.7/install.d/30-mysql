@@ -38,7 +38,10 @@ cat >/etc/mysql/my.cnf <<_EOF_
 !includedir /etc/mysql/conf.d/
 _EOF_
 
-rm /etc/init/mysql.conf
+if [ -f /etc/init/mysql.conf ]; then
+    rm /etc/init/mysql.conf
+fi
+
 systemctl daemon-reload
 systemctl enable mysql
 
