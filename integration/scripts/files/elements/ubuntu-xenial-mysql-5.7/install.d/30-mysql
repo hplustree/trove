@@ -20,6 +20,9 @@ dpkg -i mysql-community-client_5.7.13-1ubuntu16.04_amd64.deb
 dpkg -i mysql-client_5.7.13-1ubuntu16.04_amd64.deb
 dpkg -i mysql-community-server_5.7.13-1ubuntu16.04_amd64.deb
 dpkg -i mysql-server_5.7.13-1ubuntu16.04_amd64.deb
+dpkg -i libmysqlclient20_5.7.13-1ubuntu16.04_amd64.deb
+dpkg -i libmysqlclient-dev_5.7.13-1ubuntu16.04_amd64.deb
+dpkg -i libmysqld-dev_5.7.13-1ubuntu16.04_amd64.deb
 
 apt-get --allow-unauthenticated -y install percona-xtrabackup-24
 
