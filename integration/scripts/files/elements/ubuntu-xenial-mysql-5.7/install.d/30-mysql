@@ -11,7 +11,19 @@ export DEBIAN_FRONTEND=noninteractive
 add-apt-repository 'deb http://archive.ubuntu.com/ubuntu trusty universe'
 apt-get -y  update
 
-apt-get --allow-unauthenticated -y install mysql-client-5.7 mysql-server-5.7 percona-xtrabackup${PXB_VERSION_OVERRIDE}
+
+apt-get --allow-unauthenticated -y install  libaio1 libmecab2;
+wget https://downloads.mysql.com/archives/get/file/mysql-server_5.7.13-1ubuntu16.04_amd64.deb-bundle.tar
+tar -xvf mysql-server_5.7.13-1ubuntu16.04_amd64.deb-bundle.tar
+dpkg -i mysql-common_5.7.13-1ubuntu16.04_amd64.deb
+dpkg -i mysql-community-client_5.7.13-1ubuntu16.04_amd64.deb
+dpkg -i mysql-client_5.7.13-1ubuntu16.04_amd64.deb
+dpkg -i mysql-community-server_5.7.13-1ubuntu16.04_amd64.deb
+dpkg -i mysql-server_5.7.13-1ubuntu16.04_amd64.deb
+
+apt-get --allow-unauthenticated -y install percona-xtrabackup-24
+
+#apt-get --allow-unauthenticated -y install mysql-client-5.7 mysql-server-5.7 percona-xtrabackup${PXB_VERSION_OVERRIDE}
 
 cat >/etc/mysql/conf.d/no_perf_schema.cnf <<_EOF_
 [mysqld]
