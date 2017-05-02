@@ -57,9 +57,6 @@ chown mysql /var/run/mysqld
 cat /etc/init.d/mysql > /etc/init.d/mysql.back
 
 echo "
-if [ -f /etc/init/mysql.conf ]; then
-    rm /etc/init/mysql.conf
-fi
 
 if [ ! -d  /var/run/mysqld ]
 then
