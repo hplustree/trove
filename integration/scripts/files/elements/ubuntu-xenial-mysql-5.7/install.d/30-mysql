@@ -42,7 +42,11 @@ if [ -f /etc/init/mysql.conf ]; then
     rm /etc/init/mysql.conf
 fi
 
-mkdir /var/run/mysqld
+if [ ! -d  /var/run/mysqld ]
+then
+  mkdir /var/run/mysqld
+fi
+
 chown mysql /var/run/mysqld
 
 systemctl daemon-reload
