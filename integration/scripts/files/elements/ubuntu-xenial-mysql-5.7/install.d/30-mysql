@@ -42,6 +42,9 @@ if [ -f /etc/init/mysql.conf ]; then
     rm /etc/init/mysql.conf
 fi
 
+mkdir /var/run/mysqld
+chown mysql /var/run/mysqld
+
 systemctl daemon-reload
 systemctl enable mysql
 

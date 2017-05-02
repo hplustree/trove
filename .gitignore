@@ -1,3 +1,4 @@
+.idea/workspace.xml
 vagrant/
 *.pyc
 trove_test.sqlite
