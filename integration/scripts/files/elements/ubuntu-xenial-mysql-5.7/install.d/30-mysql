@@ -8,25 +8,15 @@ set -o xtrace
 
 export DEBIAN_FRONTEND=noninteractive
 
-add-apt-repository 'deb http://archive.ubuntu.com/ubuntu trusty universe'
+wget https://dev.mysql.com/get/mysql-apt-config_0.8.5-1_all.deb
+dpkg -i mysql-apt-config_0.8.5-1_all.deb
 apt-get -y  update
 
 
 apt-get --allow-unauthenticated -y install  libaio1 libmecab2;
-wget https://downloads.mysql.com/archives/get/file/mysql-server_5.7.13-1ubuntu16.04_amd64.deb-bundle.tar
-tar -xvf mysql-server_5.7.13-1ubuntu16.04_amd64.deb-bundle.tar
-dpkg -i mysql-common_5.7.13-1ubuntu16.04_amd64.deb
-dpkg -i mysql-community-client_5.7.13-1ubuntu16.04_amd64.deb
-dpkg -i mysql-client_5.7.13-1ubuntu16.04_amd64.deb
-dpkg -i mysql-community-server_5.7.13-1ubuntu16.04_amd64.deb
-dpkg -i mysql-server_5.7.13-1ubuntu16.04_amd64.deb
-dpkg -i libmysqlclient20_5.7.13-1ubuntu16.04_amd64.deb
-dpkg -i libmysqlclient-dev_5.7.13-1ubuntu16.04_amd64.deb
-dpkg -i libmysqld-dev_5.7.13-1ubuntu16.04_amd64.deb
+apt-get --allow-unauthenticated  --allow-downgrades install -y mysql-common=5.7.11-0ubuntu6 mysql-client-core-5.7=5.7.11-0ubuntu6 mysql-client-5.7=5.7.11-0ubuntu6 mysql-server-core-5.7=5.7.11-0ubuntu6 mysql-server-5.7=5.7.11-0ubuntu6 percona-xtrabackup-24;
 
-apt-get --allow-unauthenticated -y install percona-xtrabackup-24
-
-#apt-get --allow-unauthenticated -y install mysql-client-5.7 mysql-server-5.7 percona-xtrabackup-24
+#wpercona-xtrabackup-24
 
 cat >/etc/mysql/conf.d/no_perf_schema.cnf <<_EOF_
 [mysqld]
@@ -52,70 +42,6 @@ fi
 
 chown mysql /var/run/mysqld
 
-
-
-cat /etc/init.d/mysql > /etc/init.d/mysql.back
-
-echo "
-
-if [ ! -d  /var/run/mysqld ]
-then
-  mkdir /var/run/mysqld
-fi
-
-chown mysql /var/run/mysqld
-" > /etc/init.d/mysql
-
-cat /etc/init.d/mysql.back >> /etc/init.d/mysql
-rm /etc/init.d/mysql.back
-
-
-echo '#!/bin/bash
-#
-# Scripts to run by MySQL systemd service
-#
-# Needed argument: pre | post
-#
-# pre mode  :  try to perform sanity check for configuration, log, data
-# post mode :  ping server until answer is received
-
-sanity () {
-  if [ ! -r /etc/mysql/my.cnf ]; then
-    echo "MySQL configuration not found at /etc/mysql/my.cnf. Please create one."
-    exit 1
-  fi
-
-  if [ ! -d /var/lib/mysql ] && [ ! -L /var/lib/mysql ]; then
-    echo "MySQL data dir not found at /var/lib/mysql. Please create one."
-    exit 1
-  fi
-
-  if [ ! -d /var/lib/mysql/mysql ] && [ ! -L /var/lib/mysql/mysql ]; then
-    echo "MySQL system database not found. Please run mysql_install_db tool."
-    exit 1
-  fi
-}
-
-pinger () {
-  server_up=false
-  for i in $(seq 1 30); do
-    sleep 1
-    if mysqladmin ping >/dev/null 2>&1; then
-      server_up=true
-      break
-    fi
-  done
-  if [ ! $server_up ]; then
-    echo "MySQL server not started"
-    exit 1
-  fi
-}
-
-case $1 in
-  "pre")  sanity ;;
-  "post") pinger ;;
-esac
-' > /usr/share/mysql/mysql-systemd-start
 
 
 systemctl daemon-reload
