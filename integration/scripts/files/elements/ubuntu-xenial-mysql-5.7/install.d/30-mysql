@@ -70,8 +70,7 @@ cat /etc/init.d/mysql.back >> /etc/init.d/mysql
 rm /etc/init.d/mysql.back
 
 
-cat >/usr/share/mysql/mysql-systemd-start <<_EOF_
-#!/bin/bash
+echo '#!/bin/bash
 #
 # Scripts to run by MySQL systemd service
 #
@@ -116,7 +115,7 @@ case $1 in
   "pre")  sanity ;;
   "post") pinger ;;
 esac
-_EOF_
+' > /usr/share/mysql/mysql-systemd-start
 
 
 systemctl daemon-reload
