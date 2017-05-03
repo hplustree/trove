@@ -14,7 +14,7 @@ apt-get -y  update
 
 
 apt-get --allow-unauthenticated -y install  libaio1 libmecab2;
-apt-get --allow-unauthenticated  install -y mysql-common=5.7.11-0ubuntu6 mysql-client-core-5.7=5.7.11-0ubuntu6 mysql-client-5.7=5.7.11-0ubuntu6 mysql-server-core-5.7=5.7.11-0ubuntu6 mysql-server-5.7=5.7.11-0ubuntu6 percona-xtrabackup-24;
+apt-get --allow-unauthenticated  --allow-downgrades install -y mysql-common=5.7.11-0ubuntu6 mysql-client-core-5.7=5.7.11-0ubuntu6 mysql-client-5.7=5.7.11-0ubuntu6 mysql-server-core-5.7=5.7.11-0ubuntu6 mysql-server-5.7=5.7.11-0ubuntu6 percona-xtrabackup-24;
 
 #wpercona-xtrabackup-24
 
