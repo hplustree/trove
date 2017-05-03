@@ -77,6 +77,7 @@ class SingleInstanceConfigTemplate(object):
     def get_template(self):
         patterns = ['{name}/{version}/{template_name}',
                     '{name}/{template_name}',
+                    '{manager}/{version}/{template_name}',
                     '{manager}/{template_name}']
         context = self.datastore_dict.copy()
         context['template_name'] = self.template_name
