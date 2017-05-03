@@ -1,4 +1,8 @@
 [mysqld]
+
+
+
+
 log_bin = /var/lib/mysql/data/mysql-bin.log
 binlog_format = MIXED
 relay_log = /var/lib/mysql/data/mysql-relay-bin.log
