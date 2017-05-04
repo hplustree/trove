@@ -426,17 +426,7 @@ class RedisAdmin(object):
         save_cmd = 'SAVE'
         last_save = self.__client.lastsave()
         LOG.debug("Starting Redis data persist")
-        save_ok = True
-        try:
-            save_ok = self.__client.bgsave()
-        except redis.exceptions.ResponseError as re:
-            # If an auto-save is in progress just use it, since it must have
-            # just happened
-            if "Background save already in progress" in str(re):
-                LOG.info(_("Waiting for existing background save to finish"))
-            else:
-                raise
-        if save_ok:
+        if self.__client.bgsave():
             save_cmd = 'BGSAVE'
 
             def _timestamp_changed():
