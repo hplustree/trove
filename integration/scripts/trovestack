@@ -74,6 +74,7 @@ export RELEASE=${RELEASE:-$DISTRO_RELEASE}
 # allow overrides from devstack if already set
 [[ -f $PATH_DEVSTACK_SRC/functions-common ]] && source $PATH_DEVSTACK_SRC/functions-common
 [[ -f $PATH_DEVSTACK_SRC/functions ]] && source $PATH_DEVSTACK_SRC/functions
+[[ -f $PATH_DEVSTACK_SRC/lib/apache ]] && source $PATH_DEVSTACK_SRC/lib/apache
 
 # Set up variables for the CONF files - this has to happen after loading trovestack.rc, since
 # TROVE_CONF_DIR is defined there - these will be used by devstack too
@@ -1061,7 +1062,7 @@ function cmd_example_tests() {
     echo "
 {
     \"directory\": \"$TROVESTACK_TESTS/../apidocs/src/resources/samples/\",
-    \"auth_url\":\"http://$KEYSTONE_AUTH_HOST:35357/v2.0/tokens\",
+    \"auth_url\":\"http://$KEYSTONE_AUTH_HOST/identity_admin/v2.0/tokens\",
     \"api_url\":\"http://$SERVICE_HOST:8779\",
     \"replace_host\":\"https://ord.databases.api.rackspacecloud.com\",
     \"replace_dns_hostname\": \"e09ad9a3f73309469cf1f43d11e79549caf9acf2.rackspaceclouddb.com\",
