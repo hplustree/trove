@@ -82,7 +82,7 @@ class RsDnsDriverTests(object):
         while not future.ready:
             time.sleep(2)
         print("Got something: %s" % future.resource)
-        with open('/home/vagrant/dns_resource.txt', 'w') as f:
+        with open('/home/controller1/dns_resource.txt', 'w') as f:
             f.write('%r\n' % future.result[0].id)
         global DNS_DOMAIN_ID
         DNS_DOMAIN_ID = future.result[0].id
