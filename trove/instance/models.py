@@ -232,6 +232,8 @@ class SimpleInstance(object):
         # Includes ip addresses that match the regexp pattern
         if CONF.ip_regex and CONF.black_list_regex:
             IPs = filter_ips(IPs, CONF.ip_regex, CONF.black_list_regex)
+
+        LOG.info(_("ip =  %s.") % IPs )
         return IPs
 
     @property
