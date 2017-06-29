@@ -18,16 +18,12 @@ from mock import Mock
 from mock import patch
 from novaclient import exceptions as nova_exceptions
 
-from trove.common import cfg
 from trove.common import exception
 import trove.common.remote
 from trove.extensions.security_group import models as sec_mod
 from trove.instance import models as inst_model
 from trove.tests.fakes import nova
 from trove.tests.unittests import trove_testtools
-
-
-CONF = cfg.CONF
 
 
 """
@@ -53,7 +49,7 @@ class Security_Group_Exceptions_Test(trove_testtools.TestCase):
         self.FakeClient.security_group_rules.delete = fException
 
         trove.common.remote.create_nova_client = (
-            lambda c, r: self._return_mocked_nova_client(c))
+            lambda c: self._return_mocked_nova_client(c))
 
     def tearDown(self):
         super(Security_Group_Exceptions_Test, self).tearDown()
@@ -71,29 +67,25 @@ class Security_Group_Exceptions_Test(trove_testtools.TestCase):
                           sec_mod.RemoteSecurityGroup.create,
                           "TestName",
                           "TestDescription",
-                          self.context,
-                          region_name=CONF.os_region_name)
+                          self.context)
 
     @patch('trove.network.nova.LOG')
     def test_failed_to_delete_security_group(self, mock_logging):
         self.assertRaises(exception.SecurityGroupDeletionError,
                           sec_mod.RemoteSecurityGroup.delete,
-                          1, self.context,
-                          region_name=CONF.os_region_name)
+                          1, self.context)
 
     @patch('trove.network.nova.LOG')
     def test_failed_to_create_security_group_rule(self, mock_logging):
         self.assertRaises(exception.SecurityGroupRuleCreationError,
                           sec_mod.RemoteSecurityGroup.add_rule,
-                          1, "tcp", 3306, 3306, "0.0.0.0/0", self.context,
-                          region_name=CONF.os_region_name)
+                          1, "tcp", 3306, 3306, "0.0.0.0/0", self.context)
 
     @patch('trove.network.nova.LOG')
     def test_failed_to_delete_security_group_rule(self, mock_logging):
         self.assertRaises(exception.SecurityGroupRuleDeletionError,
                           sec_mod.RemoteSecurityGroup.delete_rule,
-                          1, self.context,
-                          region_name=CONF.os_region_name)
+                          1, self.context)
 
 
 class fake_RemoteSecGr(object):
@@ -101,7 +93,7 @@ class fake_RemoteSecGr(object):
         self.id = uuid.uuid4()
         return {'id': self.id}
 
-    def delete(self, context, region_name):
+    def delete(self, context):
         pass
 
 
@@ -143,7 +135,7 @@ class SecurityGroupDeleteTest(trove_testtools.TestCase):
         sec_mod.SecurityGroupInstanceAssociation.find_by = self.fException
         self.assertIsNone(
             sec_mod.SecurityGroup.delete_for_instance(
-                uuid.uuid4(), self.context, CONF.os_region_name))
+                uuid.uuid4(), self.context))
 
     def test_get_security_group_from_assoc_with_db_exception(self):
 
@@ -164,7 +156,7 @@ class SecurityGroupDeleteTest(trove_testtools.TestCase):
             return_value=new_fake_RemoteSecGrAssoc())
         self.assertIsNone(
             sec_mod.SecurityGroup.delete_for_instance(
-                i_id, self.context, CONF.os_region_name))
+                i_id, self.context))
 
     def test_delete_secgr_assoc_with_db_exception(self):
 
@@ -172,11 +164,11 @@ class SecurityGroupDeleteTest(trove_testtools.TestCase):
         sec_mod.SecurityGroupInstanceAssociation.find_by = Mock(
             return_value=fake_SecGr_Association())
         sec_mod.SecurityGroupInstanceAssociation.delete = self.fException
-        self.assertIsNotNone(sec_mod.SecurityGroupInstanceAssociation.find_by(
-            i_id, deleted=False).get_security_group())
+        self.assertNotEqual(sec_mod.SecurityGroupInstanceAssociation.find_by(
+            i_id, deleted=False).get_security_group(), None)
         self.assertTrue(hasattr(sec_mod.SecurityGroupInstanceAssociation.
                                 find_by(i_id, deleted=False).
                                 get_security_group(), 'delete'))
         self.assertIsNone(
             sec_mod.SecurityGroup.delete_for_instance(
-                i_id, self.context, CONF.os_region_name))
+                i_id, self.context))

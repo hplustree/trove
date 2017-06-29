@@ -13,6 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
+from trove.common import cfg
+
+CONF = cfg.CONF
 
 url_ref = {
     "type": "string",
@@ -250,7 +253,6 @@ cluster = {
                                 "nics": nics,
                                 "availability_zone": non_empty_string,
                                 "modules": module_list,
-                                "region_name": non_empty_string
                             }
                         }
                     },
@@ -288,8 +290,7 @@ cluster = {
                         "availability_zone": non_empty_string,
                         "modules": module_list,
                         "related_to": non_empty_string,
-                        "type": non_empty_string,
-                        "region_name": non_empty_string
+                        "type": non_empty_string
                     }
                 }
             }
@@ -309,21 +310,6 @@ cluster = {
                     "properties": {
                         "id": uuid
                     }
-                }
-            }
-        }
-    },
-    "upgrade": {
-        "type": "object",
-        "required": ["upgrade"],
-        "additionalProperties": True,
-        "properties": {
-            "upgrade": {
-                "type": "object",
-                "required": ["datastore_version"],
-                "additionalProperties": True,
-                "properties": {
-                    "datastore_version": non_empty_string
                 }
             }
         }
@@ -366,7 +352,6 @@ instance = {
                     },
                     "nics": nics,
                     "modules": module_list,
-                    "region_name": non_empty_string,
                     "locality": non_empty_string
                 }
             }
@@ -567,14 +552,8 @@ guest_log = {
 module_contents = {
     "type": "string",
     "minLength": 1,
-    "maxLength": 4294967295,
+    "maxLength": 16777215,
     "pattern": "^.*.+.*$"
-}
-
-module_apply_order = {
-    "type": "integer",
-    "minimum": 0,
-    "maximum": 9,
 }
 
 module = {
@@ -603,9 +582,6 @@ module = {
                     "all_tenants": boolean_string,
                     "visible": boolean_string,
                     "live_update": boolean_string,
-                    "priority_apply": boolean_string,
-                    "apply_order": module_apply_order,
-                    "full_access": boolean_string,
                 }
             }
         }
@@ -638,9 +614,6 @@ module = {
                     "all_datastore_versions": boolean_string,
                     "visible": boolean_string,
                     "live_update": boolean_string,
-                    "priority_apply": boolean_string,
-                    "apply_order": module_apply_order,
-                    "full_access": boolean_string,
                 }
             }
         }

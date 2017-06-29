@@ -215,8 +215,6 @@ class RedisApp(object):
 
         self.configuration_manager.apply_system_override(
             {'daemonize': 'yes',
-             'protected-mode': 'no',
-             'supervised': 'systemd',
              'pidfile': system.REDIS_PID_FILE,
              'logfile': system.REDIS_LOG_FILE,
              'dir': system.REDIS_DATA_DIR})
@@ -343,7 +341,7 @@ class RedisApp(object):
             slots = map(str, range(first_slot, last_slot + 1))
             group_size = 200
             while slots:
-                cmd = (['redis-cli', 'cluster', 'addslots']
+                cmd = ([system.REDIS_CLI, 'cluster', 'addslots']
                        + slots[0:group_size])
                 out, err = utils.execute_with_timeout(*cmd, run_as_root=True,
                                                       root_helper='sudo')

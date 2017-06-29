@@ -35,9 +35,8 @@ class InstanceDeleteRunner(TestRunner):
     def assert_instance_delete(self, instance_id, expected_http_code):
         self.report.log("Testing delete on instance: %s" % instance_id)
 
-        client = self.auth_client
-        client.instances.delete(instance_id)
-        self.assert_client_code(client, expected_http_code)
+        self.auth_client.instances.delete(instance_id)
+        self.assert_client_code(expected_http_code, client=self.auth_client)
 
     def run_instance_delete_wait(self, expected_states=['SHUTDOWN']):
         if self.has_do_not_delete_instance:

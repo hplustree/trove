@@ -216,8 +216,7 @@ class BackupCreateTest(trove_testtools.TestCase):
                               self.context, self.instance_id,
                               BACKUP_NAME, BACKUP_DESC)
 
-    @patch('trove.backup.models.LOG')
-    def test_create_backup_creation_error(self, mock_logging):
+    def test_create_backup_creation_error(self):
         instance = MagicMock()
         instance.cluster_id = None
         with patch.object(instance_models.BuiltInstance, 'load',

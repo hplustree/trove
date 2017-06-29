@@ -25,7 +25,6 @@ import pexpect
 import six
 
 from trove.common import cfg
-from trove.common.db import models
 from trove.common import exception
 from trove.common.i18n import _
 from trove.common import instance as rd_instance
@@ -33,6 +32,7 @@ from trove.common import utils as utils
 from trove.guestagent.common import operating_system
 from trove.guestagent.datastore.experimental.couchbase import system
 from trove.guestagent.datastore import service
+from trove.guestagent.db import models
 from trove.guestagent import pkg
 
 
@@ -92,7 +92,7 @@ class CouchbaseApp(object):
             LOG.info(_('Couchbase Server initial setup finished.'))
         except exception.ProcessExecutionError:
             LOG.exception(_('Error performing initial Couchbase setup.'))
-            raise RuntimeError(_("Couchbase Server initial setup failed"))
+            raise RuntimeError("Couchbase Server initial setup failed")
 
     def _install_couchbase(self, packages):
         """
@@ -130,7 +130,7 @@ class CouchbaseApp(object):
         if self.status.is_running:
             LOG.error(_("Cannot start Couchbase with configuration changes. "
                         "Couchbase state == %s.") % self.status)
-            raise RuntimeError(_("Couchbase is not stopped."))
+            raise RuntimeError("Couchbase is not stopped.")
         self._write_config(config_contents)
         self.start_db(True)
 
@@ -210,7 +210,10 @@ class CouchbaseRootAccess(object):
 
     @classmethod
     def enable_root(cls, root_password=None):
-        user = models.DatastoreUser.root(password=root_password)
+        user = models.RootUser()
+        user.name = "root"
+        user.host = "%"
+        user.password = root_password or utils.generate_random_password()
 
         if root_password:
             CouchbaseRootAccess().write_password_to_file(root_password)

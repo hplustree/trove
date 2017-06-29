@@ -32,12 +32,9 @@ class ModuleView(object):
             tenant_id=self.module.tenant_id,
             datastore_id=self.module.datastore_id,
             datastore_version_id=self.module.datastore_version_id,
-            auto_apply=bool(self.module.auto_apply),
-            priority_apply=bool(self.module.priority_apply),
-            apply_order=self.module.apply_order,
-            is_admin=bool(self.module.is_admin),
+            auto_apply=self.module.auto_apply,
             md5=self.module.md5,
-            visible=bool(self.module.visible),
+            visible=self.module.visible,
             created=self.module.created,
             updated=self.module.updated)
         # add extra data to make results more legible
@@ -51,15 +48,13 @@ class ModuleView(object):
         datastore = self.module.datastore_id
         datastore_version = self.module.datastore_version_id
         if datastore:
+            ds, ds_ver = (
+                datastore_models.get_datastore_version(
+                    type=datastore, version=datastore_version))
+            datastore = ds.name
             if datastore_version:
-                ds, ds_ver = (
-                    datastore_models.get_datastore_version(
-                        type=datastore, version=datastore_version))
-                datastore = ds.name
                 datastore_version = ds_ver.name
             else:
-                ds = datastore_models.Datastore.load(datastore)
-                datastore = ds.name
                 datastore_version = models.Modules.MATCH_ALL_NAME
         else:
             datastore = models.Modules.MATCH_ALL_NAME
@@ -96,21 +91,9 @@ class DetailedModuleView(ModuleView):
     def data(self, include_contents=False):
         return_value = super(DetailedModuleView, self).data()
         module_dict = return_value["module"]
-        module_dict["live_update"] = bool(self.module.live_update)
+        module_dict["live_update"] = self.module.live_update
         if hasattr(self.module, 'instance_count'):
             module_dict["instance_count"] = self.module.instance_count
         if include_contents:
-            if not hasattr(self.module, 'encrypted_contents'):
-                self.module.encrypted_contents = self.module.contents
-                self.module.contents = models.Module.deprocess_contents(
-                    self.module.contents)
             module_dict['contents'] = self.module.contents
         return {"module": module_dict}
-
-
-def convert_modules_to_list(modules):
-    module_list = []
-    for module in modules:
-        module_info = DetailedModuleView(module).data(include_contents=True)
-        module_list.append(module_info)
-    return module_list

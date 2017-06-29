@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import six
-
 from oslo_log import log as logging
 
 from novaclient import exceptions as nova_exceptions
@@ -23,27 +21,16 @@ from trove.cluster.tasks import ClusterTasks
 from trove.common import cfg
 from trove.common import exception
 from trove.common.i18n import _
-from trove.common.notification import (
-    DBaaSClusterAttachConfiguration,
-    DBaaSClusterDetachConfiguration,
-    DBaaSClusterGrow,
-    DBaaSClusterShrink,
-    DBaaSClusterResetStatus,
-    DBaaSClusterRestart)
-from trove.common.notification import DBaaSClusterUpgrade
-from trove.common.notification import DBaaSInstanceAttachConfiguration
-from trove.common.notification import DBaaSInstanceDetachConfiguration
-from trove.common.notification import EndNotification
+from trove.common.notification import (DBaaSClusterGrow, DBaaSClusterShrink,
+                                       DBaaSClusterResetStatus)
 from trove.common.notification import StartNotification
 from trove.common import remote
 from trove.common import server_group as srv_grp
 from trove.common.strategies.cluster import strategy
 from trove.common import utils
-from trove.configuration import models as config_models
 from trove.datastore import models as datastore_models
 from trove.db import models as dbmodels
 from trove.instance import models as inst_models
-from trove.instance.tasks import InstanceTasks
 from trove.taskmanager import api as task_api
 
 
@@ -60,7 +47,7 @@ def persisted_models():
 class DBCluster(dbmodels.DatabaseModelBase):
     _data_fields = ['id', 'created', 'updated', 'name', 'task_id',
                     'tenant_id', 'datastore_version_id', 'deleted',
-                    'deleted_at', 'configuration_id']
+                    'deleted_at']
 
     def __init__(self, task_status, **kwargs):
         """
@@ -147,11 +134,12 @@ class Cluster(object):
         self.db_info.save()
 
     def reset_task(self):
-        LOG.info(_("Setting task to NONE on cluster %s"), self.id)
+        LOG.info(_("Setting task to NONE on cluster %s") % self.id)
         self.update_db(task_status=ClusterTasks.NONE)
 
     def reset_status(self):
-        LOG.info(_("Resetting status to NONE on cluster %s"), self.id)
+        self.validate_cluster_available([ClusterTasks.BUILDING_INITIAL])
+        LOG.info(_("Resetting status to NONE on cluster %s") % self.id)
         self.reset_task()
         instances = inst_models.DBInstance.find_all(cluster_id=self.id,
                                                     deleted=False).all()
@@ -208,10 +196,6 @@ class Cluster(object):
         return self.db_info.deleted_at
 
     @property
-    def configuration_id(self):
-        return self.db_info.configuration_id
-
-    @property
     def db_instances(self):
         """DBInstance objects are persistent, therefore cacheable."""
         if not self._db_instances:
@@ -260,14 +244,14 @@ class Cluster(object):
 
     @classmethod
     def create(cls, context, name, datastore, datastore_version,
-               instances, extended_properties, locality, configuration):
+               instances, extended_properties, locality):
         locality = srv_grp.ServerGroup.build_scheduler_hint(
             context, locality, name)
         api_strategy = strategy.load_api_strategy(datastore_version.manager)
         return api_strategy.cluster_class.create(context, name, datastore,
                                                  datastore_version, instances,
                                                  extended_properties,
-                                                 locality, configuration)
+                                                 locality)
 
     def validate_cluster_available(self, valid_states=[ClusterTasks.NONE]):
         if self.db_info.task_status not in valid_states:
@@ -313,16 +297,6 @@ class Cluster(object):
                         instance['volume_size'] = int(node['volume']['size'])
                     if 'modules' in node:
                         instance['modules'] = node['modules']
-                    if 'nics' in node:
-                        instance['nics'] = node['nics']
-                    if 'availability_zone' in node:
-                        instance['availability_zone'] = (
-                            node['availability_zone'])
-                    if 'type' in node:
-                        instance_type = node['type']
-                        if isinstance(instance_type, six.string_types):
-                            instance_type = instance_type.split(',')
-                        instance['instance_type'] = instance_type
                     instances.append(instance)
                 return self.grow(instances)
         elif action == 'shrink':
@@ -336,203 +310,14 @@ class Cluster(object):
             with StartNotification(context, cluster_id=self.id):
                 return self.reset_status()
 
-        elif action == 'restart':
-            context.notification = DBaaSClusterRestart(context, request=req)
-            with StartNotification(context, cluster_id=self.id):
-                return self.restart()
-
-        elif action == 'upgrade':
-            context.notification = DBaaSClusterUpgrade(context, request=req)
-            dv_id = param['datastore_version']
-            dv = datastore_models.DatastoreVersion.load(self.datastore, dv_id)
-            with StartNotification(context, cluster_id=self.id,
-                                   datastore_version=dv.id):
-                self.upgrade(dv)
-            self.update_db(datastore_version_id=dv.id)
-
-        elif action == 'configuration_attach':
-            configuration_id = param['configuration_id']
-            context.notification = DBaaSClusterAttachConfiguration(context,
-                                                                   request=req)
-            with StartNotification(context, cluster_id=self.id,
-                                   configuration_id=configuration_id):
-                return self.configuration_attach(configuration_id)
-
-        elif action == 'configuration_detach':
-            context.notification = DBaaSClusterDetachConfiguration(context,
-                                                                   request=req)
-            with StartNotification(context, cluster_id=self.id):
-                return self.configuration_detach()
-
         else:
             raise exception.BadRequest(_("Action %s not supported") % action)
 
     def grow(self, instances):
-        raise exception.BadRequest(_("Action 'grow' not supported"))
+            raise exception.BadRequest(_("Action 'grow' not supported"))
 
     def shrink(self, instance_ids):
-        raise exception.BadRequest(_("Action 'shrink' not supported"))
-
-    def rolling_restart(self):
-        self.validate_cluster_available()
-        self.db_info.update(task_status=ClusterTasks.RESTARTING_CLUSTER)
-        try:
-            cluster_id = self.db_info.id
-            task_api.load(self.context, self.ds_version.manager
-                          ).restart_cluster(cluster_id)
-        except Exception:
-            self.db_info.update(task_status=ClusterTasks.NONE)
-            raise
-
-        return self.__class__(self.context, self.db_info,
-                              self.ds, self.ds_version)
-
-    def rolling_upgrade(self, datastore_version):
-        """Upgrades a cluster to a new datastore version."""
-        LOG.debug("Upgrading cluster %s.", self.id)
-
-        self.validate_cluster_available()
-        self.db_info.update(task_status=ClusterTasks.UPGRADING_CLUSTER)
-        try:
-            cluster_id = self.db_info.id
-            ds_ver_id = datastore_version.id
-            task_api.load(self.context, self.ds_version.manager
-                          ).upgrade_cluster(cluster_id, ds_ver_id)
-        except Exception:
-            self.db_info.update(task_status=ClusterTasks.NONE)
-            raise
-
-        return self.__class__(self.context, self.db_info,
-                              self.ds, self.ds_version)
-
-    def restart(self):
-        raise exception.BadRequest(_("Action 'restart' not supported"))
-
-    def upgrade(self, datastore_version):
-        raise exception.BadRequest(_("Action 'upgrade' not supported"))
-
-    def configuration_attach(self, configuration_id):
-        raise exception.BadRequest(
-            _("Action 'configuration_attach' not supported"))
-
-    def rolling_configuration_update(self, configuration_id,
-                                     apply_on_all=True):
-        cluster_notification = self.context.notification
-        request_info = cluster_notification.serialize(self.context)
-        self.validate_cluster_available()
-        self.db_info.update(task_status=ClusterTasks.UPDATING_CLUSTER)
-        try:
-            configuration = config_models.Configuration.find(
-                self.context, configuration_id, self.datastore_version.id)
-            instances = [inst_models.Instance.load(self.context, instance.id)
-                         for instance in self.instances]
-
-            LOG.debug("Persisting changes on cluster nodes.")
-            # Allow re-applying the same configuration (e.g. on configuration
-            # updates).
-            for instance in instances:
-                if not (instance.configuration and
-                        instance.configuration.id != configuration_id):
-                    self.context.notification = (
-                        DBaaSInstanceAttachConfiguration(self.context,
-                                                         **request_info))
-                    with StartNotification(self.context,
-                                           instance_id=instance.id,
-                                           configuration_id=configuration_id):
-                        with EndNotification(self.context):
-                            instance.save_configuration(configuration)
-                else:
-                    LOG.debug(
-                        "Node '%(inst_id)s' already has the configuration "
-                        "'%(conf_id)s' attached.",
-                        {'inst_id': instance.id, 'conf_id': configuration_id})
-
-            # Configuration has been persisted to all instances.
-            # The cluster is in a consistent state with all nodes
-            # requiring restart.
-            # We therefore assign the configuration group ID now.
-            # The configuration can be safely detached at this point.
-            self.update_db(configuration_id=configuration_id)
-
-            LOG.debug("Applying runtime configuration changes.")
-            if instances[0].apply_configuration(configuration):
-                LOG.debug(
-                    "Runtime changes have been applied successfully to the "
-                    "first node.")
-                remaining_nodes = instances[1:]
-                if apply_on_all:
-                    LOG.debug(
-                        "Applying the changes to the remaining nodes.")
-                    for instance in remaining_nodes:
-                        instance.apply_configuration(configuration)
-                else:
-                    LOG.debug(
-                        "Releasing restart-required task on the remaining "
-                        "nodes.")
-                    for instance in remaining_nodes:
-                        instance.update_db(task_status=InstanceTasks.NONE)
-        finally:
-            self.update_db(task_status=ClusterTasks.NONE)
-
-        return self.__class__(self.context, self.db_info,
-                              self.ds, self.ds_version)
-
-    def configuration_detach(self):
-        raise exception.BadRequest(
-            _("Action 'configuration_detach' not supported"))
-
-    def rolling_configuration_remove(self, apply_on_all=True):
-        cluster_notification = self.context.notification
-        request_info = cluster_notification.serialize(self.context)
-        self.validate_cluster_available()
-        self.db_info.update(task_status=ClusterTasks.UPDATING_CLUSTER)
-        try:
-            instances = [inst_models.Instance.load(self.context, instance.id)
-                         for instance in self.instances]
-
-            LOG.debug("Removing changes from cluster nodes.")
-            for instance in instances:
-                if instance.configuration:
-                    self.context.notification = (
-                        DBaaSInstanceDetachConfiguration(self.context,
-                                                         **request_info))
-                    with StartNotification(self.context,
-                                           instance_id=instance.id):
-                        with EndNotification(self.context):
-                            instance.delete_configuration()
-                else:
-                    LOG.debug(
-                        "Node '%s' has no configuration attached.",
-                        instance.id)
-
-            # The cluster is in a consistent state with all nodes
-            # requiring restart.
-            # New configuration can be safely attached at this point.
-            configuration_id = self.configuration_id
-            self.update_db(configuration_id=None)
-
-            LOG.debug("Applying runtime configuration changes.")
-            if instances[0].reset_configuration(configuration_id):
-                LOG.debug(
-                    "Runtime changes have been applied successfully to the "
-                    "first node.")
-                remaining_nodes = instances[1:]
-                if apply_on_all:
-                    LOG.debug(
-                        "Applying the changes to the remaining nodes.")
-                    for instance in remaining_nodes:
-                        instance.reset_configuration(configuration_id)
-                else:
-                    LOG.debug(
-                        "Releasing restart-required task on the remaining "
-                        "nodes.")
-                    for instance in remaining_nodes:
-                        instance.update_db(task_status=InstanceTasks.NONE)
-        finally:
-            self.update_db(task_status=ClusterTasks.NONE)
-
-        return self.__class__(self.context, self.db_info,
-                              self.ds, self.ds_version)
+            raise exception.BadRequest(_("Action 'shrink' not supported"))
 
     @staticmethod
     def load_instance(context, cluster_id, instance_id):
@@ -554,28 +339,25 @@ def is_cluster_deleting(context, cluster_id):
             cluster.db_info.task_status == ClusterTasks.SHRINKING_CLUSTER)
 
 
-def validate_instance_flavors(context, instances,
-                              volume_enabled, ephemeral_enabled):
-    """Validate flavors for given instance definitions."""
-    nova_cli_cache = dict()
+def get_flavors_from_instance_defs(context, instances,
+                                   volume_enabled, ephemeral_enabled):
+    """Load and validate flavors for given instance definitions."""
+    flavors = dict()
+    nova_client = remote.create_nova_client(context)
     for instance in instances:
-        region_name = instance.get('region_name')
         flavor_id = instance['flavor_id']
-        try:
-            if region_name in nova_cli_cache:
-                nova_client = nova_cli_cache[region_name]
-            else:
-                nova_client = remote.create_nova_client(
-                    context, region_name)
-                nova_cli_cache[region_name] = nova_client
+        if flavor_id not in flavors:
+            try:
+                flavor = nova_client.flavors.get(flavor_id)
+                if (not volume_enabled and
+                        (ephemeral_enabled and flavor.ephemeral == 0)):
+                    raise exception.LocalStorageNotSpecified(
+                        flavor=flavor_id)
+                flavors[flavor_id] = flavor
+            except nova_exceptions.NotFound:
+                raise exception.FlavorNotFound(uuid=flavor_id)
 
-            flavor = nova_client.flavors.get(flavor_id)
-            if (not volume_enabled and
-                    (ephemeral_enabled and flavor.ephemeral == 0)):
-                raise exception.LocalStorageNotSpecified(
-                    flavor=flavor_id)
-        except nova_exceptions.NotFound:
-            raise exception.FlavorNotFound(uuid=flavor_id)
+    return flavors
 
 
 def get_required_volume_size(instances, volume_enabled):
@@ -600,46 +382,7 @@ def get_required_volume_size(instances, volume_enabled):
     return None
 
 
-def assert_homogeneous_cluster(instances, required_flavor=None,
-                               required_volume_size=None):
-    """Verify that all instances have the same flavor and volume size
-    (volume size = 0 if there should be no Trove volumes).
-    """
-    assert_same_instance_flavors(instances, required_flavor=required_flavor)
-    assert_same_instance_volumes(instances, required_size=required_volume_size)
-
-
-def assert_same_instance_flavors(instances, required_flavor=None):
-    """Verify that all instances have the same flavor.
-
-    :param required_flavor            The flavor all instances should have or
-                                      None if no specific flavor is required.
-    :type required_flavor             flavor_id
-    """
-    flavors = {instance['flavor_id'] for instance in instances}
-    if len(flavors) != 1 or (required_flavor is not None and
-                             required_flavor not in flavors):
-        raise exception.ClusterFlavorsNotEqual()
-
-
-def assert_same_instance_volumes(instances, required_size=None):
-    """Verify that all instances have the same volume size (size = 0 if there
-    is not a Trove volume for the instance).
-
-    :param required_size              Size in GB all instance's volumes should
-                                      have or 0 if there should be no attached
-                                      volumes.
-                                      None if no particular size is required.
-    :type required_size               int
-    """
-    sizes = {instance.get('volume_size', 0) for instance in instances}
-    if len(sizes) != 1 or (required_size is not None and
-                           required_size not in sizes):
-        raise exception.ClusterVolumeSizesNotEqual()
-
-
 def validate_volume_size(size):
-    """Verify the volume size is within the maximum limit for Trove volumes."""
     if size is None:
         raise exception.VolumeSizeNotSpecified()
     max_size = CONF.max_accepted_volume_size

@@ -14,13 +14,13 @@
 # under the License.
 
 from oslo_log import log as logging
-from trove.common.db import models
 from trove.common import exception
 from trove.common.i18n import _
 from trove.common import utils
 from trove.guestagent.common import operating_system
 from trove.guestagent.datastore.experimental.db2 import service
 from trove.guestagent.datastore.experimental.db2 import system
+from trove.guestagent.db import models
 from trove.guestagent.strategies.backup import base
 
 LOG = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ class DB2Backup(base.BackupRunner):
         dbNames = []
         databases, marker = self.admin.list_databases()
         for database in databases:
-            mydb = models.DatastoreSchema()
+            mydb = models.MySQLDatabase()
             mydb.deserialize(database)
             dbNames.append(mydb.name)
         return dbNames
@@ -57,7 +57,7 @@ class DB2Backup(base.BackupRunner):
                                                                 dbname})
                 size = size + int(out[0])
         except exception.ProcessExecutionError:
-            LOG.exception(_("An error occurred while trying to "
+            LOG.exception(_("An error occured while trying to "
                             "estimate backup size"))
         LOG.debug("Estimated size for databases: " + str(size))
         return size
@@ -130,7 +130,7 @@ class DB2OnlineBackup(DB2Backup):
                 log_size = log_size + int(out[0])
             log_size = log_size * 1024
         except exception.ProcessExecutionError:
-            LOG.exception(_("An error occurred while trying to estimate log "
+            LOG.exception(_("An error occured while trying to estimate log "
                             "size"))
         LOG.debug("Estimated log size for all databases: " + str(log_size))
         return log_size

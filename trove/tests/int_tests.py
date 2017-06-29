@@ -34,7 +34,7 @@ from trove.tests.api import users
 from trove.tests.api import versions
 from trove.tests.scenario import groups
 from trove.tests.scenario.groups import backup_group
-from trove.tests.scenario.groups import cluster_group
+from trove.tests.scenario.groups import cluster_actions_group
 from trove.tests.scenario.groups import configuration_group
 from trove.tests.scenario.groups import database_actions_group
 from trove.tests.scenario.groups import guest_log_group
@@ -69,20 +69,8 @@ def build_group(*groups):
     return out
 
 
-def register(group_names, *test_groups, **kwargs):
-    if kwargs:
-        register(group_names, kwargs.values())
-        for suffix, grp_set in kwargs.items():
-            # Recursively call without the kwargs
-            register([name + '_' + suffix for name in group_names], *grp_set)
-        return
-
-    # Do the actual registration here
-    proboscis.register(groups=build_group(group_names),
-                       depends_on_groups=build_group(*test_groups))
-    # Now register the same groups with '-' instead of '_'
-    proboscis.register(groups=build_group(
-                       [name.replace('_', '-') for name in group_names]),
+def register(datastores, *test_groups):
+    proboscis.register(groups=build_group(datastores),
                        depends_on_groups=build_group(*test_groups))
 
 black_box_groups = [
@@ -148,52 +136,23 @@ base_groups = [
 ]
 
 # Cluster-based groups
-cluster_create_groups = list(base_groups)
-cluster_create_groups.extend([groups.CLUSTER_DELETE_WAIT])
-
-cluster_actions_groups = list(cluster_create_groups)
-cluster_actions_groups.extend([groups.CLUSTER_ACTIONS_SHRINK_WAIT])
-
-cluster_negative_actions_groups = list(negative_cluster_actions_group.GROUP)
-
-cluster_root_groups = list(cluster_create_groups)
-cluster_root_groups.extend([groups.CLUSTER_ACTIONS_ROOT_ENABLE])
-
-cluster_root_actions_groups = list(cluster_actions_groups)
-cluster_root_actions_groups.extend([groups.CLUSTER_ACTIONS_ROOT_ACTIONS])
-
-cluster_restart_groups = list(cluster_create_groups)
-cluster_restart_groups.extend([groups.CLUSTER_ACTIONS_RESTART_WAIT])
-
-cluster_upgrade_groups = list(cluster_create_groups)
-cluster_upgrade_groups.extend([groups.CLUSTER_UPGRADE_WAIT])
-
-cluster_config_groups = list(cluster_create_groups)
-cluster_config_groups.extend([groups.CLUSTER_CFGGRP_DELETE])
-
-cluster_config_actions_groups = list(cluster_config_groups)
-cluster_config_actions_groups.extend([groups.CLUSTER_ACTIONS_CFGGRP_ACTIONS])
-
-cluster_groups = list(cluster_actions_groups)
-cluster_groups.extend([cluster_group.GROUP])
+cluster_actions_groups = list(base_groups)
+cluster_actions_groups.extend([cluster_actions_group.GROUP,
+                               negative_cluster_actions_group.GROUP])
 
 # Single-instance based groups
 instance_create_groups = list(base_groups)
-instance_create_groups.extend([groups.INST_CREATE,
-                               groups.INST_DELETE_WAIT])
+instance_create_groups.extend([instance_create_group.GROUP,
+                               instance_delete_group.GROUP])
 
 instance_error_create_groups = list(base_groups)
 instance_error_create_groups.extend([instance_error_create_group.GROUP])
 
-instance_force_delete_groups = list(base_groups)
-instance_force_delete_groups.extend([instance_force_delete_group.GROUP])
-
-instance_init_groups = list(base_groups)
-instance_init_groups.extend([instance_create_group.GROUP,
-                             instance_delete_group.GROUP])
-
 instance_upgrade_groups = list(instance_create_groups)
 instance_upgrade_groups.extend([instance_upgrade_group.GROUP])
+
+instance_force_delete_groups = list(base_groups)
+instance_force_delete_groups.extend([instance_force_delete_group.GROUP])
 
 backup_groups = list(instance_create_groups)
 backup_groups.extend([groups.BACKUP,
@@ -201,9 +160,6 @@ backup_groups.extend([groups.BACKUP,
 
 backup_incremental_groups = list(backup_groups)
 backup_incremental_groups.extend([backup_group.GROUP])
-
-backup_negative_groups = list(backup_groups)
-backup_negative_groups.extend([groups.BACKUP_CREATE_NEGATIVE])
 
 configuration_groups = list(instance_create_groups)
 configuration_groups.extend([configuration_group.GROUP])
@@ -245,23 +201,13 @@ user_actions_groups = list(instance_create_groups)
 user_actions_groups.extend([user_actions_group.GROUP])
 
 # groups common to all datastores
-common_groups = list(instance_create_groups)
-common_groups.extend([guest_log_groups, instance_init_groups, module_groups])
+common_groups = list(instance_groups)
+common_groups.extend([guest_log_groups, module_groups])
 
 # Register: Component based groups
 register(["backup"], backup_groups)
 register(["backup_incremental"], backup_incremental_groups)
-register(["backup_negative"], backup_negative_groups)
 register(["cluster"], cluster_actions_groups)
-register(["cluster_actions"], cluster_actions_groups)
-register(["cluster_create"], cluster_create_groups)
-register(["cluster_negative_actions"], cluster_negative_actions_groups)
-register(["cluster_restart"], cluster_restart_groups)
-register(["cluster_root"], cluster_root_groups)
-register(["cluster_root_actions"], cluster_root_actions_groups)
-register(["cluster_upgrade"], cluster_upgrade_groups)
-register(["cluster_config"], cluster_config_groups)
-register(["cluster_config_actions"], cluster_config_actions_groups)
 register(["common"], common_groups)
 register(["configuration"], configuration_groups)
 register(["configuration_create"], configuration_create_groups)
@@ -272,7 +218,6 @@ register(["instance_actions"], instance_actions_groups)
 register(["instance_create"], instance_create_groups)
 register(["instance_error"], instance_error_create_groups)
 register(["instance_force_delete"], instance_force_delete_groups)
-register(["instance_init"], instance_init_groups)
 register(["instance_upgrade"], instance_upgrade_groups)
 register(["module"], module_groups)
 register(["module_create"], module_create_groups)
@@ -285,138 +230,97 @@ register(["user"], user_actions_groups)
 # These should contain all functionality currently supported by the datastore.
 # Keeping them in alphabetical order may reduce the number of merge conflicts.
 register(
-    ["db2_supported"],
-    single=[common_groups,
-            configuration_groups,
-            database_actions_groups,
-            user_actions_groups, ],
-    multi=[]
+    ["db2_supported"], common_groups,
+    configuration_groups,
+    database_actions_groups,
+    user_actions_groups,
 )
 
 register(
-    ["cassandra_supported"],
-    single=[common_groups,
-            backup_groups,
-            database_actions_groups,
-            configuration_groups,
-            user_actions_groups, ],
-    multi=[cluster_actions_groups,
-           cluster_negative_actions_groups,
-           cluster_root_actions_groups,
-           cluster_config_actions_groups, ]
+    ["cassandra_supported"], common_groups,
+    backup_groups,
+    database_actions_groups,
+    cluster_actions_groups,
+    configuration_groups,
+    user_actions_groups,
 )
 
 register(
-    ["couchbase_supported"],
-    single=[common_groups,
-            backup_groups,
-            root_actions_groups, ],
-    multi=[]
+    ["couchbase_supported"], common_groups,
+    backup_groups,
+    root_actions_groups,
 )
 
 register(
-    ["couchdb_supported"],
-    single=[common_groups,
-            backup_groups,
-            database_actions_groups,
-            root_actions_groups,
-            user_actions_groups, ],
-    multi=[]
+    ["couchdb_supported"], common_groups,
+    backup_groups,
+    database_actions_groups,
+    root_actions_groups,
+    user_actions_groups,
 )
 
 register(
-    ["mariadb_supported"],
-    single=[common_groups,
-            backup_incremental_groups,
-            configuration_groups,
-            database_actions_groups,
-            root_actions_groups,
-            user_actions_groups, ],
-    multi=[replication_promote_groups, ]
-    # multi=[cluster_actions_groups,
-    #        cluster_negative_actions_groups,
-    #        cluster_root_actions_groups,
-    #        replication_promote_groups, ]
+    ["postgresql_supported"], common_groups,
+    backup_incremental_groups,
+    database_actions_groups,
+    configuration_groups,
+    replication_groups,
+    root_actions_groups,
+    user_actions_groups,
 )
 
 register(
-    ["mongodb_supported"],
-    single=[common_groups,
-            backup_groups,
-            configuration_groups,
-            database_actions_groups,
-            root_actions_groups,
-            user_actions_groups, ],
-    multi=[cluster_actions_groups, ]
+    ["mysql_supported", "percona_supported"], common_groups,
+    backup_incremental_groups,
+    configuration_groups,
+    database_actions_groups,
+    instance_upgrade_groups,
+    replication_promote_groups,
+    root_actions_groups,
+    user_actions_groups,
 )
 
 register(
-    ["mysql_supported"],
-    single=[common_groups,
-            backup_incremental_groups,
-            configuration_groups,
-            database_actions_groups,
-            instance_groups,
-            instance_upgrade_groups,
-            root_actions_groups,
-            user_actions_groups, ],
-    multi=[replication_promote_groups, ]
+    ["mariadb_supported"], common_groups,
+    backup_incremental_groups,
+    cluster_actions_groups,
+    configuration_groups,
+    database_actions_groups,
+    replication_promote_groups,
+    root_actions_groups,
+    user_actions_groups,
 )
 
 register(
-    ["percona_supported"],
-    single=[common_groups,
-            backup_incremental_groups,
-            configuration_groups,
-            database_actions_groups,
-            instance_upgrade_groups,
-            root_actions_groups,
-            user_actions_groups, ],
-    multi=[replication_promote_groups, ]
+    ["mongodb_supported"], common_groups,
+    backup_groups,
+    cluster_actions_groups,
+    configuration_groups,
+    database_actions_groups,
+    root_actions_groups,
+    user_actions_groups,
 )
 
 register(
-    ["postgresql_supported"],
-    single=[common_groups,
-            backup_incremental_groups,
-            database_actions_groups,
-            configuration_groups,
-            root_actions_groups,
-            user_actions_groups, ],
-    multi=[replication_groups, ]
+    ["pxc_supported"], common_groups,
+    backup_incremental_groups,
+    cluster_actions_groups,
+    configuration_groups,
+    database_actions_groups,
+    root_actions_groups,
+    user_actions_groups,
 )
 
 register(
-    ["pxc_supported"],
-    single=[common_groups,
-            backup_incremental_groups,
-            configuration_groups,
-            database_actions_groups,
-            root_actions_groups,
-            user_actions_groups, ],
-    multi=[]
-    # multi=[cluster_actions_groups,
-    #        cluster_negative_actions_groups,
-    #        cluster_root_actions_groups, ]
+    ["redis_supported"], common_groups,
+    backup_groups,
+    cluster_actions_groups,
+    replication_promote_groups,
 )
 
 register(
-    ["redis_supported"],
-    single=[common_groups,
-            backup_groups,
-            configuration_groups, ],
-    multi=[replication_promote_groups, ]
-    # multi=[cluster_actions_groups,
-    #        cluster_negative_actions_groups,
-    #        replication_promote_groups, ]
-)
-
-register(
-    ["vertica_supported"],
-    single=[common_groups,
-            configuration_groups,
-            root_actions_groups, ],
-    multi=[cluster_actions_groups,
-           cluster_negative_actions_groups,
-           cluster_root_actions_groups, ]
+    ["vertica_supported"], common_groups,
+    cluster_actions_groups,
+    configuration_groups,
+    root_actions_groups,
 )

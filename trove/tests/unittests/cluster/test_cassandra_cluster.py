@@ -39,7 +39,7 @@ class ClusterTest(trove_testtools.TestCase):
 
     @patch.object(inst_models.Instance, 'create')
     @patch.object(quota.QUOTAS, 'check_quotas')
-    @patch.object(models, 'validate_instance_flavors')
+    @patch.object(models, 'get_flavors_from_instance_defs')
     @patch.object(models, 'get_required_volume_size', return_value=3)
     def test_create_cluster_instances(self, get_vol_size, _, check_quotas,
                                       inst_create):
@@ -53,7 +53,7 @@ class ClusterTest(trove_testtools.TestCase):
             CassandraCluster._create_cluster_instances(
                 self.context, 'test_cluster_id', 'test_cluster',
                 datastore, datastore_version,
-                test_instances, None, None, None)
+                test_instances, None, None)
 
         check_quotas.assert_called_once_with(
             ANY, instances=num_instances, volumes=get_vol_size.return_value)

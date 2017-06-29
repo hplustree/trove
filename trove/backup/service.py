@@ -18,13 +18,14 @@ from oslo_log import log as logging
 from trove.backup.models import Backup
 from trove.backup import views
 from trove.common import apischema
+from trove.common import cfg
 from trove.common.i18n import _
 from trove.common import notification
 from trove.common.notification import StartNotification
 from trove.common import pagination
-from trove.common import policy
 from trove.common import wsgi
 
+CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
 
@@ -38,10 +39,9 @@ class BackupController(wsgi.Controller):
         """
         Return all backups information for a tenant ID.
         """
-        LOG.debug("Listing backups for tenant %s", tenant_id)
+        LOG.debug("Listing backups for tenant %s" % tenant_id)
         datastore = req.GET.get('datastore')
         context = req.environ[wsgi.CONTEXT_KEY]
-        policy.authorize_on_tenant(context, 'backup:index')
         backups, marker = Backup.list(context, datastore)
         view = views.BackupViews(backups)
         paged = pagination.SimplePaginatedDataView(req.url, 'backups', view,
@@ -50,18 +50,15 @@ class BackupController(wsgi.Controller):
 
     def show(self, req, tenant_id, id):
         """Return a single backup."""
-        LOG.debug("Showing a backup for tenant %(tenant_id)s ID: '%(id)s'",
-                  {'tenant_id': tenant_id, 'id': id})
+        LOG.debug("Showing a backup for tenant %s ID: '%s'"
+                  % (tenant_id, id))
         context = req.environ[wsgi.CONTEXT_KEY]
         backup = Backup.get_by_id(context, id)
-        policy.authorize_on_target(context, 'backup:show',
-                                   {'tenant': backup.tenant_id})
         return wsgi.Result(views.BackupView(backup).data(), 200)
 
     def create(self, req, body, tenant_id):
         LOG.info(_("Creating a backup for tenant %s"), tenant_id)
         context = req.environ[wsgi.CONTEXT_KEY]
-        policy.authorize_on_tenant(context, 'backup:create')
         data = body['backup']
         instance = data['instance']
         name = data['name']
@@ -78,12 +75,9 @@ class BackupController(wsgi.Controller):
 
     def delete(self, req, tenant_id, id):
         LOG.info(_('Deleting backup for tenant %(tenant_id)s '
-                   'ID: %(backup_id)s'),
+                   'ID: %(backup_id)s') %
                  {'tenant_id': tenant_id, 'backup_id': id})
         context = req.environ[wsgi.CONTEXT_KEY]
-        backup = Backup.get_by_id(context, id)
-        policy.authorize_on_target(context, 'backup:delete',
-                                   {'tenant': backup.tenant_id})
         context.notification = notification.DBaaSBackupDelete(context,
                                                               request=req)
         with StartNotification(context, backup_id=id):

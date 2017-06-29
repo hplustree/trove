@@ -64,16 +64,36 @@ class GaleraCommonCluster(cluster_models.Cluster):
             raise exception.ClusterNumInstancesNotLargeEnough(
                 num_instances=ds_conf.min_cluster_member_count)
 
+        # Checking flavors and get delta for quota check
+        flavor_ids = [instance['flavor_id'] for instance in instances]
+        if len(set(flavor_ids)) != 1:
+            raise exception.ClusterFlavorsNotEqual()
+        flavor_id = flavor_ids[0]
+        nova_client = remote.create_nova_client(context)
+        try:
+            flavor = nova_client.flavors.get(flavor_id)
+        except nova_exceptions.NotFound:
+            raise exception.FlavorNotFound(uuid=flavor_id)
+        deltas = {'instances': num_instances}
+
         # Checking volumes and get delta for quota check
-        cluster_models.validate_instance_flavors(
-            context, instances, ds_conf.volume_support, ds_conf.device_path)
-
-        req_volume_size = cluster_models.get_required_volume_size(
-            instances, ds_conf.volume_support)
-
-        cluster_models.assert_homogeneous_cluster(instances)
-
-        deltas = {'instances': num_instances, 'volumes': req_volume_size}
+        volume_sizes = [instance['volume_size'] for instance in instances
+                        if instance.get('volume_size', None)]
+        volume_size = None
+        if ds_conf.volume_support:
+            if len(volume_sizes) != num_instances:
+                raise exception.ClusterVolumeSizeRequired()
+            if len(set(volume_sizes)) != 1:
+                raise exception.ClusterVolumeSizesNotEqual()
+            volume_size = volume_sizes[0]
+            cluster_models.validate_volume_size(volume_size)
+            deltas['volumes'] = volume_size * num_instances
+        else:
+            if len(volume_sizes) > 0:
+                raise exception.VolumeNotSupported()
+            ephemeral_support = ds_conf.device_path
+            if ephemeral_support and flavor.ephemeral == 0:
+                raise exception.LocalStorageNotSpecified(flavor=flavor_id)
 
         # quota check
         check_quotas(context.tenant, deltas)
@@ -90,15 +110,13 @@ class GaleraCommonCluster(cluster_models.Cluster):
             return
         instance_nic = instance_nics[0]
         try:
-            nova_client = remote.create_nova_client(context)
             nova_client.networks.get(instance_nic)
         except nova_exceptions.NotFound:
             raise exception.NetworkNotFound(uuid=instance_nic)
 
     @staticmethod
     def _create_instances(context, db_info, datastore, datastore_version,
-                          instances, extended_properties, locality,
-                          configuration_id):
+                          instances, extended_properties, locality):
         member_config = {"id": db_info.id,
                          "instance_type": "member"}
         name_index = 1
@@ -119,17 +137,16 @@ class GaleraCommonCluster(cluster_models.Cluster):
                                 availability_zone=instance.get(
                                     'availability_zone', None),
                                 nics=instance.get('nics', None),
-                                configuration_id=configuration_id,
+                                configuration_id=None,
                                 cluster_config=member_config,
-                                modules=instance.get('modules'),
                                 locality=locality,
-                                region_name=instance.get('region_name')
+                                modules=instance.get('modules')
                                 )
                 for instance in instances]
 
     @classmethod
     def create(cls, context, name, datastore, datastore_version,
-               instances, extended_properties, locality, configuration):
+               instances, extended_properties, locality):
         LOG.debug("Initiating Galera cluster creation.")
         cls._validate_cluster_instances(context, instances, datastore,
                                         datastore_version)
@@ -137,18 +154,24 @@ class GaleraCommonCluster(cluster_models.Cluster):
         db_info = cluster_models.DBCluster.create(
             name=name, tenant_id=context.tenant,
             datastore_version_id=datastore_version.id,
-            task_status=ClusterTasks.BUILDING_INITIAL,
-            configuration_id=configuration)
+            task_status=ClusterTasks.BUILDING_INITIAL)
 
         cls._create_instances(context, db_info, datastore, datastore_version,
-                              instances, extended_properties, locality,
-                              configuration)
+                              instances, extended_properties, locality)
 
         # Calling taskmanager to further proceed for cluster-configuration
         task_api.load(context, datastore_version.manager).create_cluster(
             db_info.id)
 
         return cls(context, db_info, datastore, datastore_version)
+
+    def _get_cluster_network_interfaces(self):
+        nova_client = remote.create_nova_client(self.context)
+        nova_instance_id = self.db_instances[0].compute_instance_id
+        interfaces = nova_client.virtual_interfaces.list(nova_instance_id)
+        ret = [{"net-id": getattr(interface, 'net_id')}
+               for interface in interfaces]
+        return ret
 
     def grow(self, instances):
         LOG.debug("Growing cluster %s." % self.id)
@@ -162,17 +185,20 @@ class GaleraCommonCluster(cluster_models.Cluster):
 
         db_info.update(task_status=ClusterTasks.GROWING_CLUSTER)
         try:
+            # Get the network of the existing cluster instances.
+            interface_ids = self._get_cluster_network_interfaces()
+            for instance in instances:
+                instance["nics"] = interface_ids
+
             locality = srv_grp.ServerGroup.convert_to_hint(self.server_group)
-            configuration_id = self.db_info.configuration_id
             new_instances = self._create_instances(
                 context, db_info, datastore, datastore_version, instances,
-                None, locality, configuration_id)
+                None, locality)
 
             task_api.load(context, datastore_version.manager).grow_cluster(
                 db_info.id, [instance.id for instance in new_instances])
         except Exception:
             db_info.update(task_status=ClusterTasks.NONE)
-            raise
 
         return self.__class__(context, db_info,
                               datastore, datastore_version)
@@ -196,22 +222,9 @@ class GaleraCommonCluster(cluster_models.Cluster):
                                             for instance in removal_instances])
         except Exception:
             self.db_info.update(task_status=ClusterTasks.NONE)
-            raise
 
         return self.__class__(self.context, self.db_info,
                               self.ds, self.ds_version)
-
-    def restart(self):
-        self.rolling_restart()
-
-    def upgrade(self, datastore_version):
-        self.rolling_upgrade(datastore_version)
-
-    def configuration_attach(self, configuration_id):
-        self.rolling_configuration_update(configuration_id)
-
-    def configuration_detach(self):
-        self.rolling_configuration_remove()
 
 
 class GaleraCommonClusterView(ClusterView):

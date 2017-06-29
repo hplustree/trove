@@ -58,10 +58,7 @@ class MongoDbCluster(models.Cluster):
 
     @classmethod
     def create(cls, context, name, datastore, datastore_version,
-               instances, extended_properties, locality, configuration):
-
-        if configuration:
-            raise exception.ConfigurationNotSupported()
+               instances, extended_properties, locality):
 
         # TODO(amcreynolds): consider moving into CONF and even supporting
         # TODO(amcreynolds): an array of values, e.g. [3, 5, 7]
@@ -71,33 +68,47 @@ class MongoDbCluster(models.Cluster):
         if num_instances != 3:
             raise exception.ClusterNumInstancesNotSupported(num_instances=3)
 
+        flavor_ids = [instance['flavor_id'] for instance in instances]
+        if len(set(flavor_ids)) != 1:
+            raise exception.ClusterFlavorsNotEqual()
+        flavor_id = flavor_ids[0]
+        nova_client = remote.create_nova_client(context)
+        try:
+            flavor = nova_client.flavors.get(flavor_id)
+        except nova_exceptions.NotFound:
+            raise exception.FlavorNotFound(uuid=flavor_id)
         mongo_conf = CONF.get(datastore_version.manager)
         num_configsvr = mongo_conf.num_config_servers_per_cluster
         num_mongos = mongo_conf.num_query_routers_per_cluster
         delta_instances = num_instances + num_configsvr + num_mongos
+        deltas = {'instances': delta_instances}
 
-        models.validate_instance_flavors(
-            context, instances, mongo_conf.volume_support,
-            mongo_conf.device_path)
-        models.assert_homogeneous_cluster(instances)
-
-        req_volume_size = models.get_required_volume_size(
-            instances, mongo_conf.volume_support)
-
-        deltas = {'instances': delta_instances, 'volumes': req_volume_size}
+        volume_sizes = [instance['volume_size'] for instance in instances
+                        if instance.get('volume_size', None)]
+        volume_size = None
+        if mongo_conf.volume_support:
+            if len(volume_sizes) != num_instances:
+                raise exception.ClusterVolumeSizeRequired()
+            if len(set(volume_sizes)) != 1:
+                raise exception.ClusterVolumeSizesNotEqual()
+            volume_size = volume_sizes[0]
+            models.validate_volume_size(volume_size)
+            # TODO(amcreynolds): for now, mongos+configsvr same flavor+disk
+            deltas['volumes'] = volume_size * delta_instances
+        else:
+            # TODO(amcreynolds): is ephemeral possible for mongodb clusters?
+            if len(volume_sizes) > 0:
+                raise exception.VolumeNotSupported()
+            ephemeral_support = mongo_conf.device_path
+            if ephemeral_support and flavor.ephemeral == 0:
+                raise exception.LocalStorageNotSpecified(flavor=flavor_id)
 
         check_quotas(context.tenant, deltas)
-
-        flavor_id = instances[0]['flavor_id']
-        volume_size = instances[0].get('volume_size', None)
 
         nics = [instance.get('nics', None) for instance in instances]
 
         azs = [instance.get('availability_zone', None)
                for instance in instances]
-
-        regions = [instance.get('region_name', None)
-                   for instance in instances]
 
         db_info = models.DBCluster.create(
             name=name, tenant_id=context.tenant,
@@ -135,9 +146,8 @@ class MongoDbCluster(models.Cluster):
                                         nics=nics[i],
                                         configuration_id=None,
                                         cluster_config=member_config,
-                                        modules=instances[i].get('modules'),
                                         locality=locality,
-                                        region_name=regions[i])
+                                        modules=instances[i].get('modules'))
 
         for i in range(1, num_configsvr + 1):
             instance_name = "%s-%s-%s" % (name, "configsvr", str(i))
@@ -151,8 +161,7 @@ class MongoDbCluster(models.Cluster):
                                         nics=None,
                                         configuration_id=None,
                                         cluster_config=configsvr_config,
-                                        locality=locality,
-                                        region_name=regions[i])
+                                        locality=locality)
 
         for i in range(1, num_mongos + 1):
             instance_name = "%s-%s-%s" % (name, "mongos", str(i))
@@ -166,8 +175,7 @@ class MongoDbCluster(models.Cluster):
                                         nics=None,
                                         configuration_id=None,
                                         cluster_config=mongos_config,
-                                        locality=locality,
-                                        region_name=regions[i])
+                                        locality=locality)
 
         task_api.load(context, datastore_version.manager).create_cluster(
             db_info.id)
@@ -202,8 +210,6 @@ class MongoDbCluster(models.Cluster):
                                                     'query_router'])
         name = _check_option('name')
         related_to = _check_option('related_to')
-        nics = _check_option('nics')
-        availability_zone = _check_option('availability_zone')
 
         unused_keys = list(set(item.keys()).difference(set(used_keys)))
         if unused_keys:
@@ -219,10 +225,6 @@ class MongoDbCluster(models.Cluster):
             instance['name'] = name
         if related_to:
             instance['related_to'] = related_to
-        if nics:
-            instance['nics'] = nics
-        if availability_zone:
-            instance['availability_zone'] = availability_zone
         return instance
 
     def action(self, context, req, action, param):
@@ -630,7 +632,6 @@ class MongoDbCluster(models.Cluster):
 
 
 class MongoDbClusterView(ClusterView):
-
     def build_instances(self):
         return self._build_instances(['query_router'], ['member'])
 

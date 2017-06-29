@@ -22,8 +22,6 @@ import trove.common.apischema as apischema
 from trove.common.auth import admin_context
 from trove.common import exception
 from trove.common.i18n import _
-from trove.common import notification
-from trove.common.notification import StartNotification
 from trove.common import wsgi
 from trove.extensions.mgmt.instances import models
 from trove.extensions.mgmt.instances import views
@@ -65,7 +63,7 @@ class MgmtInstanceController(InstanceController):
             instances = models.load_mgmt_instances(
                 context, deleted=deleted, include_clustered=include_clustered)
         except nova_exceptions.ClientException as e:
-            LOG.exception(e)
+            LOG.error(e)
             return wsgi.Result(str(e), 403)
 
         view_cls = views.MgmtInstancesView
@@ -120,32 +118,28 @@ class MgmtInstanceController(InstanceController):
                 raise exception.BadRequest(msg)
 
         if selected_action:
-            return selected_action(context, instance, req, body)
+            return selected_action(context, instance, body)
         else:
             raise exception.BadRequest(_("Invalid request body."))
 
-    def _action_stop(self, context, instance, req, body):
+    def _action_stop(self, context, instance, body):
         LOG.debug("Stopping MySQL on instance %s." % instance.id)
         instance.stop_db()
         return wsgi.Result(None, 202)
 
-    def _action_reboot(self, context, instance, req, body):
+    def _action_reboot(self, context, instance, body):
         LOG.debug("Rebooting instance %s." % instance.id)
         instance.reboot()
         return wsgi.Result(None, 202)
 
-    def _action_migrate(self, context, instance, req, body):
+    def _action_migrate(self, context, instance, body):
         LOG.debug("Migrating instance %s." % instance.id)
         LOG.debug("body['migrate']= %s" % body['migrate'])
         host = body['migrate'].get('host', None)
-
-        context.notification = notification.DBaaSInstanceMigrate(context,
-                                                                 request=req)
-        with StartNotification(context, host=host):
-            instance.migrate(host)
+        instance.migrate(host)
         return wsgi.Result(None, 202)
 
-    def _action_reset_task_status(self, context, instance, req, body):
+    def _action_reset_task_status(self, context, instance, body):
         LOG.debug("Setting Task-Status to NONE on instance %s." %
                   instance.id)
         instance.reset_task_status()
@@ -169,7 +163,7 @@ class MgmtInstanceController(InstanceController):
         try:
             instance_models.Instance.load(context=context, id=id)
         except exception.TroveError as e:
-            LOG.exception(e)
+            LOG.error(e)
             return wsgi.Result(str(e), 404)
         rhv = views.RootHistoryView(id)
         reh = mysql_models.RootHistory.load(context=context, instance_id=id)

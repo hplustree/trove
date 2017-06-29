@@ -19,7 +19,6 @@ import abc
 from oslo_log import log as logging
 import six
 
-from trove.common.i18n import _
 from trove.common import utils
 
 
@@ -54,7 +53,7 @@ class Strategy(object):
         ns = ns or cls.__strategy_ns__
         if ns is None:
             raise RuntimeError(
-                _('No namespace provided and __strategy_ns__ unset'))
+                'No namespace provided or __strategy_ns__ unset')
 
         LOG.debug('Looking for strategy %s in %s', name, ns)
 

@@ -118,11 +118,11 @@ class BasePackagerMixin(object):
             self.pexpect_wait_and_close_proc(child)
         except pexpect.TIMEOUT:
             self.pexpect_kill_proc(child)
-            raise PkgTimeout(_("Process timeout after %i seconds.") % time_out)
+            raise PkgTimeout("Process timeout after %i seconds." % time_out)
         return (i, match)
 
 
-class RPMPackagerMixin(BasePackagerMixin):
+class RedhatPackagerMixin(BasePackagerMixin):
 
     def _rpm_remove_nodeps(self, package_name):
         """
@@ -138,12 +138,63 @@ class RPMPackagerMixin(BasePackagerMixin):
                           package_name)
 
     def _install(self, packages, time_out):
-        """must be overridden by an RPM based PackagerMixin"""
-        raise NotImplementedError()
+        """Attempts to install packages.
+
+        Returns OK if the packages are installed or a result code if a
+        recoverable-error occurred.
+        Raises an exception if a non-recoverable error or timeout occurs.
+
+        """
+        cmd = "sudo yum --color=never -y install %s" % " ".join(packages)
+        output_expects = ['\[sudo\] password for .*:',
+                          'No package (.*) available.',
+                          ('file .* from install of .* conflicts with file'
+                           ' from package (.*?)\r\n'),
+                          'Error: (.*?) conflicts with .*?\r\n',
+                          'Processing Conflict: .* conflicts (.*?)\r\n',
+                          '.*scriptlet failed*',
+                          'HTTP Error',
+                          'No more mirrors to try.',
+                          'GPG key retrieval failed:',
+                          '.*already installed and latest version',
+                          'Updated:',
+                          'Installed:']
+        LOG.debug("Running package install command: %s" % cmd)
+        i, match = self.pexpect_run(cmd, output_expects, time_out)
+        if i == 0:
+            raise PkgPermissionError("Invalid permissions.")
+        elif i == 1:
+            raise PkgNotFoundError("Could not find pkg %s" % match.group(1))
+        elif i == 2 or i == 3 or i == 4:
+            self._rpm_remove_nodeps(match.group(1))
+            return CONFLICT_REMOVED
+        elif i == 5:
+            raise PkgScriptletError("Package scriptlet failed")
+        elif i == 6 or i == 7:
+            raise PkgDownloadError("Package download problem")
+        elif i == 8:
+            raise PkgSignError("GPG key retrieval failed")
+        return OK
 
     def _remove(self, package_name, time_out):
-        """must be overridden by an RPM based PackagerMixin"""
-        raise NotImplementedError()
+        """Removes a package.
+
+        Returns OK if the package is removed successfully or a result code if a
+        recoverable-error occurs.
+        Raises an exception if a non-recoverable error or timeout occurs.
+
+        """
+        cmd = "sudo yum --color=never -y remove %s" % package_name
+        LOG.debug("Running package remove command: %s" % cmd)
+        output_expects = ['\[sudo\] password for .*:',
+                          'No Packages marked for removal',
+                          'Removed:']
+        i, match = self.pexpect_run(cmd, output_expects, time_out)
+        if i == 0:
+            raise PkgPermissionError("Invalid permissions.")
+        elif i == 1:
+            raise PkgNotFoundError("Could not find pkg %s" % package_name)
+        return OK
 
     def pkg_install(self, packages, config_opts, time_out):
         result = self._install(packages, time_out)
@@ -151,7 +202,7 @@ class RPMPackagerMixin(BasePackagerMixin):
             while result == CONFLICT_REMOVED:
                 result = self._install(packages, time_out)
             if result != OK:
-                raise PkgPackageStateError(_("Cannot install packages."))
+                raise PkgPackageStateError("Cannot install packages.")
 
     def pkg_is_installed(self, packages):
         packages = packages if isinstance(packages, list) else packages.split()
@@ -188,71 +239,8 @@ class RPMPackagerMixin(BasePackagerMixin):
             return
         result = self._remove(package_name, time_out)
         if result != OK:
-            raise PkgPackageStateError(_("Package %s is in a bad state.")
+            raise PkgPackageStateError("Package %s is in a bad state."
                                        % package_name)
-
-
-class RedhatPackagerMixin(RPMPackagerMixin):
-    def _install(self, packages, time_out):
-        """Attempts to install packages.
-
-        Returns OK if the packages are installed or a result code if a
-        recoverable-error occurred.
-        Raises an exception if a non-recoverable error or timeout occurs.
-
-        """
-        cmd = "sudo yum --color=never -y install %s" % " ".join(packages)
-        output_expects = ['\[sudo\] password for .*:',
-                          'No package (.*) available.',
-                          ('file .* from install of .* conflicts with file'
-                           ' from package (.*?)\r\n'),
-                          'Error: (.*?) conflicts with .*?\r\n',
-                          'Processing Conflict: .* conflicts (.*?)\r\n',
-                          '.*scriptlet failed*',
-                          'HTTP Error',
-                          'No more mirrors to try.',
-                          'GPG key retrieval failed:',
-                          '.*already installed and latest version',
-                          'Updated:',
-                          'Installed:']
-        LOG.debug("Running package install command: %s" % cmd)
-        i, match = self.pexpect_run(cmd, output_expects, time_out)
-        if i == 0:
-            raise PkgPermissionError(_("Invalid permissions."))
-        elif i == 1:
-            raise PkgNotFoundError(_("Could not find package %s") %
-                                   match.group(1))
-        elif i == 2 or i == 3 or i == 4:
-            self._rpm_remove_nodeps(match.group(1))
-            return CONFLICT_REMOVED
-        elif i == 5:
-            raise PkgScriptletError(_("Package scriptlet failed"))
-        elif i == 6 or i == 7:
-            raise PkgDownloadError(_("Package download problem"))
-        elif i == 8:
-            raise PkgSignError(_("GPG key retrieval failed"))
-        return OK
-
-    def _remove(self, package_name, time_out):
-        """Removes a package.
-
-        Returns OK if the package is removed successfully or a result code if a
-        recoverable-error occurs.
-        Raises an exception if a non-recoverable error or timeout occurs.
-
-        """
-        cmd = "sudo yum --color=never -y remove %s" % package_name
-        LOG.debug("Running package remove command: %s" % cmd)
-        output_expects = ['\[sudo\] password for .*:',
-                          'No Packages marked for removal',
-                          'Removed:']
-        i, match = self.pexpect_run(cmd, output_expects, time_out)
-        if i == 0:
-            raise PkgPermissionError(_("Invalid permissions."))
-        elif i == 1:
-            raise PkgNotFoundError(_("Could not find package %s") %
-                                   package_name)
-        return OK
 
 
 class DebianPackagerMixin(BasePackagerMixin):
@@ -296,7 +284,7 @@ class DebianPackagerMixin(BasePackagerMixin):
                 utils.execute("dpkg", "--configure", "-a",
                               run_as_root=True, root_helper="sudo")
             except ProcessExecutionError:
-                raise PkgConfigureError(_("Error configuring package."))
+                raise PkgConfigureError("Error configuring package.")
             finally:
                 os.remove(fname)
 
@@ -326,10 +314,9 @@ class DebianPackagerMixin(BasePackagerMixin):
         LOG.debug("Running package install command: %s" % cmd)
         i, match = self.pexpect_run(cmd, output_expects, time_out)
         if i == 0:
-            raise PkgPermissionError(_("Invalid permissions."))
+            raise PkgPermissionError("Invalid permissions.")
         elif i == 1 or i == 2 or i == 3:
-            raise PkgNotFoundError(_("Could not find package %s") %
-                                   match.group(1))
+            raise PkgNotFoundError("Could not find apt %s" % match.group(1))
         elif i == 4:
             return RUN_DPKG_FIRST
         elif i == 5:
@@ -359,10 +346,9 @@ class DebianPackagerMixin(BasePackagerMixin):
         LOG.debug("Running remove package command %s" % cmd)
         i, match = self.pexpect_run(cmd, output_expects, time_out)
         if i == 0:
-            raise PkgPermissionError(_("Invalid permissions."))
+            raise PkgPermissionError("Invalid permissions.")
         elif i == 1:
-            raise PkgNotFoundError(_("Could not find package %s") %
-                                   package_name)
+            raise PkgNotFoundError("Could not find pkg %s" % package_name)
         elif i == 2 or i == 3:
             return REINSTALL_FIRST
         elif i == 4:
@@ -385,7 +371,7 @@ class DebianPackagerMixin(BasePackagerMixin):
                 self._fix(time_out)
             result = self._install(packages, time_out)
             if result != OK:
-                raise PkgPackageStateError(_("Packages are in a bad state."))
+                raise PkgPackageStateError("Packages is in a bad state.")
         # even after successful install, packages can stay unconfigured
         # config_opts - is dict with name/value for questions asked by
         # interactive configure script
@@ -433,7 +419,7 @@ class DebianPackagerMixin(BasePackagerMixin):
                 self._fix(time_out)
             result = self._remove(package_name, time_out)
             if result != OK:
-                raise PkgPackageStateError(_("Package %s is in a bad state.")
+                raise PkgPackageStateError("Package %s is in a bad state."
                                            % package_name)
 
 

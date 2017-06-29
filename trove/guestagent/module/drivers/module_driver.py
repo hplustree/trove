@@ -21,11 +21,13 @@ import six
 
 from oslo_log import log as logging
 
+from trove.common import cfg
 from trove.common import exception
 from trove.common.i18n import _
 
 
 LOG = logging.getLogger(__name__)
+CONF = cfg.CONF
 
 
 @six.add_metaclass(abc.ABCMeta)

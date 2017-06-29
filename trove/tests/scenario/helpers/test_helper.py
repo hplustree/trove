@@ -39,18 +39,16 @@ class DataType(Enum):
     micro4 = 4
     # very tiny amount of data, useful for testing replication
     # propagation, etc.
-    tiny = 5
+    tiny = 3
     # another tiny dataset (also for replication propagation)
-    tiny2 = 6
+    tiny2 = 4
     # a third tiny dataset (also for replication propagation)
-    tiny3 = 7
-    # a forth tiny dataset (for cluster propagation)
-    tiny4 = 8
+    tiny3 = 5
     # small amount of data (this can be added to each instance
     # after creation, for example).
-    small = 9
+    small = 6
     # large data, enough to make creating a backup take 20s or more.
-    large = 10
+    large = 7
 
 
 class TestHelper(object):
@@ -131,9 +129,6 @@ class TestHelper(object):
                 self.DATA_SIZE: 100},
             DataType.tiny3.name: {
                 self.DATA_START: 3000,
-                self.DATA_SIZE: 100},
-            DataType.tiny4.name: {
-                self.DATA_START: 4000,
                 self.DATA_SIZE: 100},
             DataType.small.name: {
                 self.DATA_START: 10000,
@@ -221,54 +216,53 @@ class TestHelper(object):
         Since this method may be called multiple times, the
         'add_actual_data' function should be idempotent.
         """
-        self._perform_data_action(self.FN_ADD, data_type.name,
-                                  host, *args, **kwargs)
+        self._perform_data_action(self.FN_ADD, data_type.name, host,
+                                  *args, **kwargs)
 
     def remove_data(self, data_type, host, *args, **kwargs):
         """Removes all data associated with 'data_type'.  See
         instructions for 'add_data' for implementation guidance.
         """
-        self._perform_data_action(self.FN_REMOVE, data_type.name,
-                                  host, *args, **kwargs)
+        self._perform_data_action(self.FN_REMOVE, data_type.name, host,
+                                  *args, **kwargs)
 
     def verify_data(self, data_type, host, *args, **kwargs):
         """Verify that the data of type 'data_type' exists in the
         datastore.  This can be done by testing edge cases, and possibly
         some random elements within the set.  See
         instructions for 'add_data' for implementation guidance.
-        """
-        self._perform_data_action(self.FN_VERIFY, data_type.name,
-                                  host, *args, **kwargs)
-
-    def _perform_data_action(self, fn_type, fn_name, host,
-                             *args, **kwargs):
-        """By default, the action is attempted 10 times, sleeping for 3
+        By default, the verification is attempted 10 times, sleeping for 3
         seconds between each attempt.  This can be controlled by the
         retry_count and retry_sleep kwarg values.
         """
         retry_count = kwargs.pop('retry_count', 10) or 0
         retry_sleep = kwargs.pop('retry_sleep', 3) or 0
-
-        fns = self._data_fns[fn_type]
-        data_fn_name = self.data_fn_pattern % (fn_type, fn_name)
         attempts = -1
         while True:
             attempts += 1
             try:
-                fns[data_fn_name](self, host, *args, **kwargs)
+                self._perform_data_action(self.FN_VERIFY, data_type.name, host,
+                                          *args, **kwargs)
                 break
-            except SkipTest:
-                raise
             except Exception as ex:
-                self.report.log("Attempt %d to %s data type %s failed\n%s"
-                                % (attempts, fn_type, fn_name, ex))
+                self.report.log("Attempt %d to verify data type %s failed\n%s"
+                                % (attempts, data_type.name, ex))
                 if attempts > retry_count:
-                    raise RuntimeError("Error calling %s from class %s - %s" %
-                                       (data_fn_name, self.__class__.__name__,
-                                        ex))
+                    raise
                 self.report.log("Trying again (after %d second sleep)" %
                                 retry_sleep)
                 sleep(retry_sleep)
+
+    def _perform_data_action(self, fn_type, fn_name, host, *args, **kwargs):
+        fns = self._data_fns[fn_type]
+        data_fn_name = self.data_fn_pattern % (fn_type, fn_name)
+        try:
+            fns[data_fn_name](self, host, *args, **kwargs)
+        except SkipTest:
+            raise
+        except Exception as ex:
+            raise RuntimeError("Error calling %s from class %s - %s" %
+                               (data_fn_name, self.__class__.__name__, ex))
 
     def _build_data_fns(self):
         """Build the base data functions specified by FN_TYPE_*
@@ -487,24 +481,9 @@ class TestHelper(object):
         """
         return False
 
-    ################
+    ##############
     # Module related
-    ################
+    ##############
     def get_valid_module_type(self):
         """Return a valid module type."""
         return "Ping"
-
-    #################
-    # Cluster related
-    #################
-    def get_cluster_types(self):
-        """Returns a list of cluster type lists to use when creating instances.
-        The list should be the same size as the number of cluster instances
-        that will be created.  If not specified, no types are sent to
-        cluster-create.  Cluster grow uses the first type in the list for the
-        first instance, and doesn't use anything for the second instance
-        (i.e. doesn't pass in anything for 'type').
-        An example for this method would be:
-            return [['data', 'other_type'], ['third_type']]
-        """
-        return None

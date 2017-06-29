@@ -82,20 +82,19 @@ class CassandraCluster(models.Cluster):
 
     @classmethod
     def create(cls, context, name, datastore, datastore_version,
-               instances, extended_properties, locality, configuration):
+               instances, extended_properties, locality):
         LOG.debug("Processing a request for creating a new cluster.")
 
         # Updating Cluster Task.
         db_info = models.DBCluster.create(
             name=name, tenant_id=context.tenant,
             datastore_version_id=datastore_version.id,
-            task_status=ClusterTasks.BUILDING_INITIAL,
-            configuration_id=configuration)
+            task_status=ClusterTasks.BUILDING_INITIAL)
 
         cls._create_cluster_instances(
             context, db_info.id, db_info.name,
             datastore, datastore_version, instances, extended_properties,
-            locality, configuration)
+            locality)
 
         # Calling taskmanager to further proceed for cluster-configuration.
         task_api.load(context, datastore_version.manager).create_cluster(
@@ -107,7 +106,7 @@ class CassandraCluster(models.Cluster):
     def _create_cluster_instances(
             cls, context, cluster_id, cluster_name,
             datastore, datastore_version, instances, extended_properties,
-            locality, configuration_id):
+            locality):
         LOG.debug("Processing a request for new cluster instances.")
 
         cassandra_conf = CONF.get(datastore_version.manager)
@@ -115,8 +114,8 @@ class CassandraCluster(models.Cluster):
         vol_enabled = cassandra_conf.volume_support
 
         # Validate instance flavors.
-        models.validate_instance_flavors(context, instances,
-                                         vol_enabled, eph_enabled)
+        models.get_flavors_from_instance_defs(context, instances,
+                                              vol_enabled, eph_enabled)
 
         # Compute the total volume allocation.
         req_volume_size = models.get_required_volume_size(instances,
@@ -154,11 +153,10 @@ class CassandraCluster(models.Cluster):
                 instance['volume_size'], None,
                 nics=instance.get('nics', None),
                 availability_zone=instance_az,
-                configuration_id=configuration_id,
+                configuration_id=None,
                 cluster_config=member_config,
-                modules=instance.get('modules'),
                 locality=locality,
-                region_name=instance.get('region_name'))
+                modules=instance.get('modules'))
 
             new_instances.append(new_instance)
 
@@ -181,11 +179,9 @@ class CassandraCluster(models.Cluster):
         db_info.update(task_status=ClusterTasks.GROWING_CLUSTER)
 
         locality = srv_grp.ServerGroup.convert_to_hint(self.server_group)
-        configuration_id = self.db_info.configuration_id
-
         new_instances = self._create_cluster_instances(
             context, db_info.id, db_info.name, datastore, datastore_version,
-            instances, None, locality, configuration_id)
+            instances, None, locality)
 
         task_api.load(context, datastore_version.manager).grow_cluster(
             db_info.id, [instance.id for instance in new_instances])
@@ -208,18 +204,6 @@ class CassandraCluster(models.Cluster):
             db_info.id, removal_ids)
 
         return CassandraCluster(context, db_info, datastore, datastore_version)
-
-    def restart(self):
-        self.rolling_restart()
-
-    def upgrade(self, datastore_version):
-        self.rolling_upgrade(datastore_version)
-
-    def configuration_attach(self, configuration_id):
-        self.rolling_configuration_update(configuration_id, apply_on_all=False)
-
-    def configuration_detach(self):
-        self.rolling_configuration_remove(apply_on_all=False)
 
 
 class CassandraClusterView(ClusterView):

@@ -290,7 +290,6 @@ class MySqlManager(manager.Manager):
         operating_system.copy("%s/." % upgrade_info['home_save'],
                               os.path.expanduser('~'),
                               preserve=True, as_root=True)
-        self.configuration_manager.refresh_cache()
         app.start_mysql()
 
     def restart(self, context):
@@ -415,7 +414,7 @@ class MySqlManager(manager.Manager):
                 self._validate_slave_for_replication(context, replica_info)
             self.replication.enable_as_slave(app, replica_info, slave_config)
         except Exception:
-            LOG.exception(_("Error enabling replication."))
+            LOG.exception("Error enabling replication.")
             app.status.set_status(rd_instance.ServiceStatuses.FAILED)
             raise
 

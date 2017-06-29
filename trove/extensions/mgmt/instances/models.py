@@ -21,7 +21,9 @@ from trove.common.i18n import _
 from trove.common import remote
 from trove.common import utils
 from trove.extensions.mysql import models as mysql_models
+from trove.instance import models as imodels
 from trove.instance import models as instance_models
+from trove.instance.models import load_instance, InstanceServiceStatus
 from trove import rpc
 
 LOG = logging.getLogger(__name__)
@@ -31,7 +33,7 @@ CONF = cfg.CONF
 def load_mgmt_instances(context, deleted=None, client=None,
                         include_clustered=None):
     if not client:
-        client = remote.create_nova_client(context, CONF.os_region_name)
+        client = remote.create_nova_client(context)
     try:
         mgmt_servers = client.rdservers.list()
     except AttributeError:
@@ -52,10 +54,9 @@ def load_mgmt_instances(context, deleted=None, client=None,
 
 def load_mgmt_instance(cls, context, id, include_deleted):
     try:
-        instance = instance_models.load_instance(
-            cls, context, id, needs_server=True,
-            include_deleted=include_deleted)
-        client = remote.create_nova_client(context, CONF.os_region_name)
+        instance = load_instance(cls, context, id, needs_server=True,
+                                 include_deleted=include_deleted)
+        client = remote.create_nova_client(context)
         try:
             server = client.rdservers.get(instance.server_id)
         except AttributeError:
@@ -73,13 +74,12 @@ def load_mgmt_instance(cls, context, id, include_deleted):
         assert instance.server is not None
     except Exception as e:
         LOG.error(e)
-        instance = instance_models.load_instance(
-            cls, context, id, needs_server=False,
-            include_deleted=include_deleted)
+        instance = load_instance(cls, context, id, needs_server=False,
+                                 include_deleted=include_deleted)
     return instance
 
 
-class SimpleMgmtInstance(instance_models.BaseInstance):
+class SimpleMgmtInstance(imodels.BaseInstance):
     def __init__(self, context, db_info, server, datastore_status):
         super(SimpleMgmtInstance, self).__init__(context, db_info, server,
                                                  datastore_status)
@@ -87,7 +87,7 @@ class SimpleMgmtInstance(instance_models.BaseInstance):
     @property
     def status(self):
         if self.deleted:
-            return instance_models.InstanceStatus.SHUTDOWN
+            return imodels.InstanceStatus.SHUTDOWN
         return super(SimpleMgmtInstance, self).status
 
     @property
@@ -130,7 +130,7 @@ class DetailedMgmtInstance(SimpleMgmtInstance):
         return instance
 
 
-class MgmtInstance(instance_models.Instance):
+class MgmtInstance(imodels.Instance):
     def get_diagnostics(self):
         return self.get_guest().get_diagnostics()
 
@@ -144,17 +144,19 @@ class MgmtInstance(instance_models.Instance):
         return self.get_guest().rpc_ping()
 
 
-class MgmtInstances(instance_models.Instances):
+class MgmtInstances(imodels.Instances):
     @staticmethod
     def load_status_from_existing(context, db_infos, servers):
         def load_instance(context, db, status, server=None):
             return SimpleMgmtInstance(context, db, server, status)
 
         if context is None:
-            raise TypeError(_("Argument context not defined."))
-        find_server = instance_models.create_server_list_matcher(servers)
-        instances = instance_models.Instances._load_servers_status(
-            load_instance, context, db_infos, find_server)
+            raise TypeError("Argument context not defined.")
+        find_server = imodels.create_server_list_matcher(servers)
+        instances = imodels.Instances._load_servers_status(load_instance,
+                                                           context,
+                                                           db_infos,
+                                                           find_server)
         _load_servers(instances, find_server)
         return instances
 
@@ -167,7 +169,7 @@ def _load_servers(instances, find_server):
             server = find_server(db.id, db.compute_instance_id)
             instance.server = server
         except Exception as ex:
-            LOG.exception(ex)
+            LOG.error(ex)
     return instances
 
 
@@ -229,7 +231,7 @@ class NotificationTransformer(object):
         db_infos = instance_models.DBInstance.find_all(deleted=False)
         for db_info in db_infos:
             try:
-                service_status = instance_models.InstanceServiceStatus.find_by(
+                service_status = InstanceServiceStatus.find_by(
                     instance_id=db_info.id)
             except exception.ModelNotFoundError:
                 # There is a small window of opportunity during when the db

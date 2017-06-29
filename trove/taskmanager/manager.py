@@ -14,6 +14,7 @@
 #    under the License.
 
 from oslo_log import log as logging
+import oslo_messaging as messaging
 from oslo_service import periodic_task
 from oslo_utils import importutils
 
@@ -25,7 +26,9 @@ from trove.common.exception import ReplicationSlaveAttachError
 from trove.common.exception import TroveError
 from trove.common.i18n import _
 from trove.common.notification import DBaaSQuotas, EndNotification
+#from trove.common import remote
 from trove.common import remote
+import trove.common.rpc.version as rpc_version
 from trove.common import server_group as srv_grp
 from trove.common.strategies.cluster import strategy
 from trove.datastore.models import DatastoreVersion
@@ -40,6 +43,8 @@ CONF = cfg.CONF
 
 
 class Manager(periodic_task.PeriodicTasks):
+
+    target = messaging.Target(version=rpc_version.RPC_API_VERSION)
 
     def __init__(self):
         super(Manager, self).__init__(CONF)
@@ -148,12 +153,11 @@ class Manager(periodic_task.PeriodicTasks):
                 self._set_task_status(exception_replicas,
                                       InstanceTasks.PROMOTION_ERROR)
                 msg = (_("promote-to-replica-source %(id)s: The following "
-                         "replicas may not have been switched: %(replicas)s:"
-                         "\n%(err)s") %
+                         "replicas may not have been switched: %(replicas)s") %
                        {"id": master_candidate.id,
-                        "replicas": [repl.id for repl in exception_replicas],
-                        "err": error_messages})
-                raise ReplicationSlaveAttachError(msg)
+                        "replicas": [repl.id for repl in exception_replicas]})
+                raise ReplicationSlaveAttachError("%s:\n%s" %
+                                                  (msg, error_messages))
 
         with EndNotification(context):
             master_candidate = BuiltInstanceTasks.load(context, instance_id)
@@ -229,12 +233,11 @@ class Manager(periodic_task.PeriodicTasks):
                 self._set_task_status(exception_replicas,
                                       InstanceTasks.EJECTION_ERROR)
                 msg = (_("eject-replica-source %(id)s: The following "
-                         "replicas may not have been switched: %(replicas)s:"
-                         "\n%(err)s") %
+                         "replicas may not have been switched: %(replicas)s") %
                        {"id": master_candidate.id,
-                        "replicas": [repl.id for repl in exception_replicas],
-                        "err": error_messages})
-                raise ReplicationSlaveAttachError(msg)
+                        "replicas": [repl.id for repl in exception_replicas]})
+                raise ReplicationSlaveAttachError("%s:\n%s" %
+                                                  (msg, error_messages))
 
         with EndNotification(context):
             master = BuiltInstanceTasks.load(context, instance_id)
@@ -373,7 +376,7 @@ class Manager(periodic_task.PeriodicTasks):
                         cluster_config, volume_type, modules, locality):
         with EndNotification(context,
                              instance_id=(instance_id[0]
-                                          if isinstance(instance_id, list)
+                                          if type(instance_id) is list
                                           else instance_id)):
             self._create_instance(context, instance_id, name, flavor,
                                   image_id, databases, users,
@@ -389,6 +392,15 @@ class Manager(periodic_task.PeriodicTasks):
         with EndNotification(context):
             instance_tasks.upgrade(datastore_version)
 
+    def update_overrides(self, context, instance_id, overrides):
+        instance_tasks = models.BuiltInstanceTasks.load(context, instance_id)
+        instance_tasks.update_overrides(overrides)
+
+    def unassign_configuration(self, context, instance_id, flavor,
+                               configuration_id):
+        instance_tasks = models.BuiltInstanceTasks.load(context, instance_id)
+        instance_tasks.unassign_configuration(flavor, configuration_id)
+
     def create_cluster(self, context, cluster_id):
         with EndNotification(context, cluster_id=cluster_id):
             cluster_tasks = models.load_cluster_tasks(context, cluster_id)
@@ -402,25 +414,10 @@ class Manager(periodic_task.PeriodicTasks):
         cluster_tasks = models.load_cluster_tasks(context, cluster_id)
         cluster_tasks.shrink_cluster(context, cluster_id, instance_ids)
 
-    def restart_cluster(self, context, cluster_id):
-        cluster_tasks = models.load_cluster_tasks(context, cluster_id)
-        cluster_tasks.restart_cluster(context, cluster_id)
-
-    def upgrade_cluster(self, context, cluster_id, datastore_version_id):
-        datastore_version = DatastoreVersion.load_by_uuid(datastore_version_id)
-        cluster_tasks = models.load_cluster_tasks(context, cluster_id)
-        cluster_tasks.upgrade_cluster(context, cluster_id, datastore_version)
-
     def delete_cluster(self, context, cluster_id):
         with EndNotification(context):
             cluster_tasks = models.load_cluster_tasks(context, cluster_id)
             cluster_tasks.delete_cluster(context, cluster_id)
-
-    def reapply_module(self, context, module_id, md5, include_clustered,
-                       batch_size, batch_delay, force):
-        models.ModuleTasks.reapply_module(
-            context, module_id, md5, include_clustered,
-            batch_size, batch_delay, force)
 
     if CONF.exists_notification_transformer:
         @periodic_task.periodic_task
@@ -432,14 +429,13 @@ class Manager(periodic_task.PeriodicTasks):
             mgmtmodels.publish_exist_events(self.exists_transformer,
                                             self.admin_context)
 
-    if CONF.quota_notification_interval:
-        @periodic_task.periodic_task(spacing=CONF.quota_notification_interval)
-        def publish_quota_notifications(self, context):
-            nova_client = remote.create_nova_client(self.admin_context)
-            for tenant in nova_client.tenants.list():
-                for quota in QUOTAS.get_all_quotas_by_tenant(tenant.id):
-                    usage = QUOTAS.get_quota_usage(quota)
-                    DBaaSQuotas(self.admin_context, quota, usage).notify()
+    @periodic_task.periodic_task(spacing=CONF.quota_notification_interval)
+    def publish_quota_notifications(self, context):
+        nova_client = remote.create_admin_nova_client(self.admin_context)
+#        for tenant in nova_client.tenants.list():
+#            for quota in QUOTAS.get_all_quotas_by_tenant(tenant.id):
+#                usage = QUOTAS.get_quota_usage(quota)
+#                DBaaSQuotas(self.admin_context, quota, usage).notify()
 
     def __getattr__(self, name):
         """

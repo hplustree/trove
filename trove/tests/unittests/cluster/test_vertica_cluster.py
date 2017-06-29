@@ -19,6 +19,7 @@ from novaclient import exceptions as nova_exceptions
 from trove.cluster.models import Cluster
 from trove.cluster.models import ClusterTasks
 from trove.cluster.models import DBCluster
+from trove.common import cfg
 from trove.common import exception
 from trove.common import remote
 from trove.common.strategies.cluster.experimental.vertica import (
@@ -27,6 +28,8 @@ from trove.instance import models as inst_models
 from trove.quota.quota import QUOTAS
 from trove.taskmanager import api as task_api
 from trove.tests.unittests import trove_testtools
+
+CONF = cfg.CONF
 
 
 class FakeOptGroup(object):
@@ -80,11 +83,10 @@ class ClusterTest(trove_testtools.TestCase):
                           self.cluster_name,
                           self.datastore,
                           self.datastore_version,
-                          [], None, None, None)
+                          [], None, None)
 
     @patch.object(DBCluster, 'create')
     @patch.object(inst_models.DBInstance, 'find_all')
-    @patch.object(remote, 'create_nova_client')
     def test_create_flavor_not_specified(self, *args):
         instances = self.instances
         instances[0]['flavor_id'] = None
@@ -95,7 +97,8 @@ class ClusterTest(trove_testtools.TestCase):
                           self.datastore,
                           self.datastore_version,
                           instances,
-                          None, None, None)
+                          None, None
+                          )
 
     @patch.object(DBCluster, 'create')
     @patch.object(inst_models.DBInstance, 'find_all')
@@ -117,7 +120,8 @@ class ClusterTest(trove_testtools.TestCase):
                           self.datastore,
                           self.datastore_version,
                           instances,
-                          None, None, None)
+                          None, None
+                          )
 
     @patch.object(DBCluster, 'create')
     @patch.object(inst_models.DBInstance, 'find_all')
@@ -135,7 +139,8 @@ class ClusterTest(trove_testtools.TestCase):
                           self.datastore,
                           self.datastore_version,
                           instances,
-                          None, None, None)
+                          None, None
+                          )
 
     @patch.object(DBCluster, 'create')
     @patch.object(inst_models.DBInstance, 'find_all')
@@ -159,7 +164,8 @@ class ClusterTest(trove_testtools.TestCase):
                           self.datastore,
                           self.datastore_version,
                           instances,
-                          None, None, None)
+                          None, None
+                          )
 
     @patch.object(DBCluster, 'create')
     @patch.object(inst_models.DBInstance, 'find_all')
@@ -170,7 +176,7 @@ class ClusterTest(trove_testtools.TestCase):
                                                                   mock_client,
                                                                   m_find_all,
                                                                   mock_create):
-        class FakeFlavor(object):
+        class FakeFlavor:
             def __init__(self, flavor_id):
                 self.flavor_id = flavor_id
 
@@ -195,7 +201,8 @@ class ClusterTest(trove_testtools.TestCase):
                           self.datastore,
                           self.datastore_version,
                           instances,
-                          None, None, None)
+                          None, None
+                          )
 
     @patch.object(DBCluster, 'create')
     @patch.object(inst_models.DBInstance, 'find_all')
@@ -213,7 +220,8 @@ class ClusterTest(trove_testtools.TestCase):
                           self.datastore,
                           self.datastore_version,
                           instances,
-                          None, None, None)
+                          None, None
+                          )
 
     @patch.object(inst_models.DBInstance, 'find_all')
     @patch.object(inst_models.Instance, 'create')
@@ -231,7 +239,7 @@ class ClusterTest(trove_testtools.TestCase):
                             self.datastore,
                             self.datastore_version,
                             instances,
-                            None, None, None)
+                            None, None)
         mock_task_api.return_value.create_cluster.assert_called_with(
             mock_db_create.return_value.id)
         self.assertEqual(3, mock_ins_create.call_count)
@@ -247,7 +255,7 @@ class ClusterTest(trove_testtools.TestCase):
                                           mock_task_api, mock_db_create,
                                           mock_ins_create, mock_conf,
                                           mock_find_all):
-        class FakeFlavor(object):
+        class FakeFlavor:
             def __init__(self, flavor_id):
                 self.flavor_id = flavor_id
 
@@ -270,7 +278,7 @@ class ClusterTest(trove_testtools.TestCase):
                             self.datastore,
                             self.datastore_version,
                             instances,
-                            None, None, None)
+                            None, None)
         mock_task_api.return_value.create_cluster.assert_called_with(
             mock_db_create.return_value.id)
         self.assertEqual(3, mock_ins_create.call_count)

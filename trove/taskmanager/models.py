@@ -13,12 +13,10 @@
 #    under the License.
 
 import os.path
-import time
 import traceback
 
 from cinderclient import exceptions as cinder_exceptions
 from eventlet import greenthread
-from eventlet.timeout import Timeout
 from heatclient import exc as heat_exceptions
 from novaclient import exceptions as nova_exceptions
 from oslo_log import log as logging
@@ -33,7 +31,6 @@ from trove.cluster.models import Cluster
 from trove.cluster.models import DBCluster
 from trove.cluster import tasks
 from trove.common import cfg
-from trove.common import crypto_utils as cu
 from trove.common import exception
 from trove.common.exception import BackupCreationError
 from trove.common.exception import GuestError
@@ -47,10 +44,6 @@ from trove.common.i18n import _
 from trove.common import instance as rd_instance
 from trove.common.instance import ServiceStatuses
 from trove.common.notification import (
-    DBaaSInstanceRestart,
-    DBaaSInstanceUpgrade,
-    EndNotification,
-    StartNotification,
     TroveInstanceCreate,
     TroveInstanceModifyVolume,
     TroveInstanceModifyFlavor,
@@ -58,7 +51,6 @@ from trove.common.notification import (
 import trove.common.remote as remote
 from trove.common.remote import create_cinder_client
 from trove.common.remote import create_dns_client
-from trove.common.remote import create_guest_client
 from trove.common.remote import create_heat_client
 from trove.common import server_group as srv_grp
 from trove.common.strategies.cluster import strategy
@@ -74,12 +66,9 @@ from trove.instance import models as inst_models
 from trove.instance.models import BuiltInstance
 from trove.instance.models import DBInstance
 from trove.instance.models import FreshInstance
-from trove.instance.models import Instance
 from trove.instance.models import InstanceServiceStatus
 from trove.instance.models import InstanceStatus
 from trove.instance.tasks import InstanceTasks
-from trove.module import models as module_models
-from trove.module import views as module_views
 from trove.quota.quota import run_with_quotas
 from trove import rpc
 
@@ -326,88 +315,6 @@ class ClusterTasks(Cluster):
         cluster.save()
         LOG.debug("end delete_cluster for id: %s" % cluster_id)
 
-    def rolling_restart_cluster(self, context, cluster_id, delay_sec=0):
-        LOG.debug("Begin rolling cluster restart for id: %s" % cluster_id)
-
-        def _restart_cluster_instance(instance):
-            LOG.debug("Restarting instance with id: %s" % instance.id)
-            context.notification = (
-                DBaaSInstanceRestart(context, **request_info))
-            with StartNotification(context, instance_id=instance.id):
-                with EndNotification(context):
-                    instance.update_db(task_status=InstanceTasks.REBOOTING)
-                    instance.restart()
-
-        timeout = Timeout(CONF.cluster_usage_timeout)
-        cluster_notification = context.notification
-        request_info = cluster_notification.serialize(context)
-        try:
-            node_db_inst = DBInstance.find_all(cluster_id=cluster_id).all()
-            for index, db_inst in enumerate(node_db_inst):
-                if index > 0:
-                    LOG.debug(
-                        "Waiting (%ds) for restarted nodes to rejoin the "
-                        "cluster before proceeding." % delay_sec)
-                    time.sleep(delay_sec)
-                instance = BuiltInstanceTasks.load(context, db_inst.id)
-                _restart_cluster_instance(instance)
-        except Timeout as t:
-            if t is not timeout:
-                raise  # not my timeout
-            LOG.exception(_("Timeout for restarting cluster."))
-            raise
-        except Exception:
-            LOG.exception(_("Error restarting cluster.") % cluster_id)
-            raise
-        finally:
-            context.notification = cluster_notification
-            timeout.cancel()
-            self.reset_task()
-
-        LOG.debug("End rolling restart for id: %s." % cluster_id)
-
-    def rolling_upgrade_cluster(self, context, cluster_id, datastore_version):
-        LOG.debug("Begin rolling cluster upgrade for id: %s." % cluster_id)
-
-        def _upgrade_cluster_instance(instance):
-            LOG.debug("Upgrading instance with id: %s." % instance.id)
-            context.notification = (
-                DBaaSInstanceUpgrade(context, **request_info))
-            with StartNotification(
-                    context, instance_id=instance.id,
-                    datastore_version_id=datastore_version.id):
-                with EndNotification(context):
-                    instance.update_db(
-                        datastore_version_id=datastore_version.id,
-                        task_status=InstanceTasks.UPGRADING)
-                    instance.upgrade(datastore_version)
-
-        timeout = Timeout(CONF.cluster_usage_timeout)
-        cluster_notification = context.notification
-        request_info = cluster_notification.serialize(context)
-        try:
-            for db_inst in DBInstance.find_all(cluster_id=cluster_id).all():
-                instance = BuiltInstanceTasks.load(
-                    context, db_inst.id)
-                _upgrade_cluster_instance(instance)
-
-            self.reset_task()
-        except Timeout as t:
-            if t is not timeout:
-                raise  # not my timeout
-            LOG.exception(_("Timeout for upgrading cluster."))
-            self.update_statuses_on_failure(
-                cluster_id, status=InstanceTasks.UPGRADING_ERROR)
-        except Exception:
-            LOG.exception(_("Error upgrading cluster %s.") % cluster_id)
-            self.update_statuses_on_failure(
-                cluster_id, status=InstanceTasks.UPGRADING_ERROR)
-        finally:
-            context.notification = cluster_notification
-            timeout.cancel()
-
-        LOG.debug("End upgrade_cluster for id: %s." % cluster_id)
-
 
 class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
 
@@ -457,8 +364,7 @@ class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
         finally:
             if error_message:
                 inst_models.save_instance_fault(
-                    self.id, error_message, error_details,
-                    skip_delta=USAGE_SLEEP_TIME + 1)
+                    self.id, error_message, error_details)
 
     def create_instance(self, flavor, image_id, databases, users,
                         datastore_manager, packages, volume_size,
@@ -492,10 +398,6 @@ class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
         files = self.get_injected_files(datastore_manager)
         cinder_volume_type = volume_type or CONF.cinder_volume_type
         if use_heat:
-            msg = _("Support for heat templates in Trove is scheduled for "
-                    "removal. You will no longer be able to provide a heat "
-                    "template to Trove for the provisioning of resources.")
-            LOG.warning(msg)
             volume_info = self._create_server_volume_heat(
                 flavor,
                 image_id,
@@ -659,7 +561,7 @@ class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
                 LOG.error(msg_create)
                 # Make sure we log any unexpected errors from the create
                 if not isinstance(e_create, TroveError):
-                    LOG.exception(e_create)
+                    LOG.error(e_create)
                 msg_delete = (
                     _("An error occurred while deleting a bad "
                       "replication snapshot from instance %(source)s.") %
@@ -727,12 +629,10 @@ class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
         server_status = server.status
         if server_status in [InstanceStatus.ERROR,
                              InstanceStatus.FAILED]:
-            server_fault_message = 'No fault found'
-            try:
-                server_fault_message = server.fault.get('message', 'Unknown')
-            except AttributeError:
-                pass
-            server_message = "\nServer error: %s" % server_fault_message
+            server_message = ''
+            if server.fault:
+                server_message = "\nServer error: %s" % (
+                    server.fault.get('message', 'Unknown'))
             raise TroveError(_("Server not active, status: %(status)s"
                                "%(srv_msg)s") %
                              {'status': server_status,
@@ -818,7 +718,7 @@ class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
             try:
                 heat_template = heat_template_unicode.encode('utf-8')
             except UnicodeEncodeError:
-                raise TroveError(_("Failed to utf-8 encode Heat template."))
+                raise TroveError("Failed to utf-8 encode Heat template.")
 
             parameters = {"Flavor": flavor["name"],
                           "VolumeSize": volume_size,
@@ -840,24 +740,23 @@ class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
                     sleep_time=USAGE_SLEEP_TIME,
                     time_out=HEAT_TIME_OUT)
             except PollTimeOut:
-                raise TroveError(_("Failed to obtain Heat stack status. "
-                                   "Timeout occurred."))
+                raise TroveError("Failed to obtain Heat stack status. "
+                                 "Timeout occurred.")
 
             stack = client.stacks.get(stack_name)
             if ((stack.action, stack.stack_status)
                     not in HEAT_STACK_SUCCESSFUL_STATUSES):
-                raise TroveError(_("Failed to create Heat stack."))
+                raise TroveError("Failed to create Heat stack.")
 
             resource = client.resources.get(stack.id, 'BaseInstance')
             if resource.resource_status != HEAT_RESOURCE_SUCCESSFUL_STATE:
-                raise TroveError(_("Failed to provision Heat base instance."))
+                raise TroveError("Failed to provision Heat base instance.")
             instance_id = resource.physical_resource_id
 
             if self.volume_support:
                 resource = client.resources.get(stack.id, 'DataVolume')
                 if resource.resource_status != HEAT_RESOURCE_SUCCESSFUL_STATE:
-                    raise TroveError(_("Failed to provision Heat data "
-                                       "volume."))
+                    raise TroveError("Failed to provision Heat data volume.")
                 volume_id = resource.physical_resource_id
                 self.update_db(compute_instance_id=instance_id,
                                volume_id=volume_id)
@@ -963,7 +862,7 @@ class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
 
     def _create_volume(self, volume_size, volume_type, datastore_manager):
         LOG.debug("Begin _create_volume for id: %s" % self.id)
-        volume_client = create_cinder_client(self.context, self.region_name)
+        volume_client = create_cinder_client(self.context)
         volume_desc = ("datastore volume for %s" % self.id)
         volume_ref = volume_client.volumes.create(
             volume_size, name="datastore-%s" % self.id,
@@ -1095,8 +994,8 @@ class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
             LOG.debug("Creating dns entry...")
             ip = self.dns_ip_address
             if not ip:
-                raise TroveError(_("Failed to create DNS entry for instance "
-                                   "%s. No IP available.") % self.id)
+                raise TroveError("Failed to create DNS entry for instance %s. "
+                                 "No IP available." % self.id)
             dns_client.create_instance_entry(self.id, ip)
             LOG.debug("Successfully created DNS entry for instance: %s" %
                       self.id)
@@ -1106,7 +1005,7 @@ class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
 
     def _create_secgroup(self, datastore_manager):
         security_group = SecurityGroup.create_for_instance(
-            self.id, self.context, self.region_name)
+            self.id, self.context)
         tcp_ports = CONF.get(datastore_manager).tcp_ports
         udp_ports = CONF.get(datastore_manager).udp_ports
         icmp = CONF.get(datastore_manager).icmp
@@ -1134,7 +1033,7 @@ class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
         if protocol == 'icmp':
             SecurityGroupRule.create_sec_group_rule(
                 s_group, 'icmp', None, None,
-                cidr, self.context, self.region_name)
+                cidr, self.context)
         else:
             for port_or_range in set(ports):
                 try:
@@ -1142,7 +1041,7 @@ class FreshInstanceTasks(FreshInstance, NotifyMixin, ConfigurationMixin):
                     from_, to_ = utils.gen_ports(port_or_range)
                     SecurityGroupRule.create_sec_group_rule(
                         s_group, protocol, int(from_), int(to_),
-                        cidr, self.context, self.region_name)
+                        cidr, self.context)
                 except (ValueError, TroveError):
                     set_error_and_raise([from_, to_])
 
@@ -1240,8 +1139,7 @@ class BuiltInstanceTasks(BuiltInstance, NotifyMixin, ConfigurationMixin):
         # If volume has been resized it must be manually removed in cinder
         try:
             if self.volume_id:
-                volume_client = create_cinder_client(self.context,
-                                                     self.region_name)
+                volume_client = create_cinder_client(self.context)
                 volume = volume_client.volumes.get(self.volume_id)
                 if volume.status == "available":
                     LOG.info(_("Deleting volume %(v)s for instance: %(i)s.")
@@ -1514,24 +1412,6 @@ class BuiltInstanceTasks(BuiltInstance, NotifyMixin, ConfigurationMixin):
                 volume_device = self._fix_device_path(
                     volume.attachments[0]['device'])
 
-            # BUG(1650518): Cleanup in the Pike release some instances
-            # that we will be upgrading will be pre secureserialier
-            # and will have no instance_key entries. If this is one of
-            # those instances, make a key. That will make it appear in
-            # the injected files that are generated next. From this
-            # point, and until the guest comes up, attempting to send
-            # messages to it will fail because the RPC framework will
-            # encrypt messages to a guest which potentially doesn't
-            # have the code to handle it.
-            if CONF.enable_secure_rpc_messaging and (
-                    self.db_info.encrypted_key is None):
-                encrypted_key = cu.encode_data(cu.encrypt_data(
-                    cu.generate_random_key(),
-                    CONF.inst_rpc_key_encr_key))
-                self.update_db(encrypted_key=encrypted_key)
-                LOG.debug("Generated unique RPC encryption key for "
-                          "instance = %s, key = %s" % (self.id, encrypted_key))
-
             injected_files = self.get_injected_files(
                 datastore_version.manager)
             LOG.debug("Rebuilding instance %(instance)s with image %(image)s.",
@@ -1620,79 +1500,11 @@ class BackupTasks(object):
                                 "Details: %s") % e)
                 backup.state = bkup_models.BackupState.DELETE_FAILED
                 backup.save()
-                raise TroveError(_("Failed to delete swift object for backup "
-                                   "%s.") % backup_id)
+                raise TroveError("Failed to delete swift object for backup %s."
+                                 % backup_id)
         else:
             backup.delete()
         LOG.info(_("Deleted backup %s successfully.") % backup_id)
-
-
-class ModuleTasks(object):
-
-    @classmethod
-    def reapply_module(cls, context, module_id, md5, include_clustered,
-                       batch_size, batch_delay, force):
-        """Reapply module."""
-        LOG.info(_("Reapplying module %s.") % module_id)
-
-        batch_size = batch_size or CONF.module_reapply_max_batch_size
-        batch_delay = batch_delay or CONF.module_reapply_min_batch_delay
-        # Don't let non-admin bypass the safeguards
-        if not context.is_admin:
-            batch_size = min(batch_size, CONF.module_reapply_max_batch_size)
-            batch_delay = max(batch_delay, CONF.module_reapply_min_batch_delay)
-        modules = module_models.Modules.load_by_ids(context, [module_id])
-        current_md5 = modules[0].md5
-        LOG.debug("MD5: %s  Force: %s." % (md5, force))
-
-        # Process all the instances
-        instance_modules = module_models.InstanceModules.load_all(
-            context, module_id=module_id, md5=md5)
-        total_count = instance_modules.count()
-        reapply_count = 0
-        skipped_count = 0
-        if instance_modules:
-            module_list = module_views.convert_modules_to_list(modules)
-            for instance_module in instance_modules:
-                instance_id = instance_module.instance_id
-                if (instance_module.md5 != current_md5 or force) and (
-                        not md5 or md5 == instance_module.md5):
-                    instance = BuiltInstanceTasks.load(context, instance_id,
-                                                       needs_server=False)
-                    if instance and (
-                            include_clustered or not instance.cluster_id):
-                        try:
-                            module_models.Modules.validate(
-                                modules, instance.datastore.id,
-                                instance.datastore_version.id)
-                            client = create_guest_client(context, instance_id)
-                            client.module_apply(module_list)
-                            Instance.add_instance_modules(
-                                context, instance_id, modules)
-                            reapply_count += 1
-                        except exception.ModuleInvalid as ex:
-                            LOG.info(_("Skipping: %s") % ex)
-                            skipped_count += 1
-
-                        # Sleep if we've fired off too many in a row.
-                        if (batch_size and
-                                not reapply_count % batch_size and
-                                (reapply_count + skipped_count) < total_count):
-                            LOG.debug("Applied module to %d of %d instances - "
-                                      "sleeping for %ds" % (reapply_count,
-                                                            total_count,
-                                                            batch_delay))
-                            time.sleep(batch_delay)
-                    else:
-                        LOG.debug("Instance '%s' not found or doesn't match "
-                                  "criteria, skipping reapply." % instance_id)
-                        skipped_count += 1
-                else:
-                    LOG.debug("Instance '%s' does not match "
-                              "criteria, skipping reapply." % instance_id)
-                    skipped_count += 1
-        LOG.info(_("Reapplied module to %(num)d instances (skipped %(skip)d).")
-                 % {'num': reapply_count, 'skip': skipped_count})
 
 
 class ResizeVolumeAction(object):

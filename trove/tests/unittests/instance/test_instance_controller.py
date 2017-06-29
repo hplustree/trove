@@ -70,28 +70,28 @@ class TestInstanceController(trove_testtools.TestCase):
     def test_get_schema_create(self):
         schema = self.controller.get_schema('create', {'instance': {}})
         self.assertIsNotNone(schema)
-        self.assertIn('instance', schema['properties'])
+        self.assertTrue('instance' in schema['properties'])
 
     def test_get_schema_action_restart(self):
         schema = self.controller.get_schema('action', {'restart': {}})
         self.assertIsNotNone(schema)
-        self.assertIn('restart', schema['properties'])
+        self.assertTrue('restart' in schema['properties'])
 
     def test_get_schema_action_resize_volume(self):
         schema = self.controller.get_schema(
             'action', {'resize': {'volume': {}}})
         self.assertIsNotNone(schema)
-        self.assertIn('resize', schema['properties'])
-        self.assertIn(
-            'volume', schema['properties']['resize']['properties'])
+        self.assertTrue('resize' in schema['properties'])
+        self.assertTrue(
+            'volume' in schema['properties']['resize']['properties'])
 
     def test_get_schema_action_resize_flavorRef(self):
         schema = self.controller.get_schema(
             'action', {'resize': {'flavorRef': {}}})
         self.assertIsNotNone(schema)
-        self.assertIn('resize', schema['properties'])
-        self.assertIn(
-            'flavorRef', schema['properties']['resize']['properties'])
+        self.assertTrue('resize' in schema['properties'])
+        self.assertTrue(
+            'flavorRef' in schema['properties']['resize']['properties'])
 
     def test_get_schema_action_other(self):
         schema = self.controller.get_schema(
@@ -257,8 +257,8 @@ class TestInstanceController(trove_testtools.TestCase):
     def _setup_modify_instance_mocks(self):
         instance = Mock()
         instance.detach_replica = Mock()
-        instance.attach_configuration = Mock()
-        instance.detach_configuration = Mock()
+        instance.assign_configuration = Mock()
+        instance.unassign_configuration = Mock()
         instance.update_db = Mock()
         return instance
 
@@ -270,8 +270,8 @@ class TestInstanceController(trove_testtools.TestCase):
                                          instance, **args)
 
         self.assertEqual(0, instance.detach_replica.call_count)
-        self.assertEqual(0, instance.detach_configuration.call_count)
-        self.assertEqual(0, instance.attach_configuration.call_count)
+        self.assertEqual(0, instance.unassign_configuration.call_count)
+        self.assertEqual(0, instance.assign_configuration.call_count)
         self.assertEqual(0, instance.update_db.call_count)
 
     def test_modify_instance_with_nonempty_args_calls_update_db(self):
@@ -312,7 +312,7 @@ class TestInstanceController(trove_testtools.TestCase):
         self.controller._modify_instance(self.context, self.req,
                                          instance, **args)
 
-        self.assertEqual(1, instance.attach_configuration.call_count)
+        self.assertEqual(1, instance.assign_configuration.call_count)
 
     def test_modify_instance_with_None_configuration_id_arg(self):
         instance = self._setup_modify_instance_mocks()
@@ -322,7 +322,7 @@ class TestInstanceController(trove_testtools.TestCase):
         self.controller._modify_instance(self.context, self.req,
                                          instance, **args)
 
-        self.assertEqual(1, instance.detach_configuration.call_count)
+        self.assertEqual(1, instance.unassign_configuration.call_count)
 
     def test_modify_instance_with_all_args(self):
         instance = self._setup_modify_instance_mocks()
@@ -334,5 +334,5 @@ class TestInstanceController(trove_testtools.TestCase):
                                          instance, **args)
 
         self.assertEqual(1, instance.detach_replica.call_count)
-        self.assertEqual(1, instance.attach_configuration.call_count)
+        self.assertEqual(1, instance.assign_configuration.call_count)
         instance.update_db.assert_called_once_with(**args)

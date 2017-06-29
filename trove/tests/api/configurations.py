@@ -16,7 +16,6 @@
 
 from datetime import datetime
 import json
-import netaddr
 from time import sleep
 import uuid
 
@@ -25,7 +24,6 @@ from proboscis.asserts import assert_equal
 from proboscis.asserts import assert_not_equal
 from proboscis.asserts import assert_raises
 from proboscis.asserts import assert_true
-from proboscis.asserts import fail
 from proboscis import before_class
 from proboscis.decorators import time_out
 from proboscis import SkipTest
@@ -86,11 +84,7 @@ def _execute_query(host, user_name, password, query):
 
 def _get_address(instance_id):
     result = instance_info.dbaas_admin.mgmt.instances.show(instance_id)
-    try:
-        return next(str(ip) for ip in result.ip
-                    if netaddr.valid_ipv4(ip))
-    except StopIteration:
-        fail("No IPV4 ip found")
+    return result.ip[0]
 
 
 def _test_configuration_is_applied_to_instance(instance, configuration_id):

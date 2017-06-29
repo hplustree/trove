@@ -73,7 +73,7 @@ class TestClusterController(trove_testtools.TestCase):
     def test_get_schema_create(self):
         schema = self.controller.get_schema('create', self.cluster)
         self.assertIsNotNone(schema)
-        self.assertIn('cluster', schema['properties'])
+        self.assertTrue('cluster' in schema['properties'])
         self.assertTrue('cluster')
 
     def test_validate_create(self):
@@ -157,7 +157,6 @@ class TestClusterController(trove_testtools.TestCase):
                 "flavor_id": "1234",
                 "availability_zone": "az",
                 'modules': None,
-                'region_name': None,
                 "nics": [
                     {"net-id": "e89aa5fd-6b0a-436d-a75c-1545d34d5331"}
                 ]
@@ -168,7 +167,6 @@ class TestClusterController(trove_testtools.TestCase):
                 "flavor_id": "1234",
                 "availability_zone": "az",
                 'modules': None,
-                'region_name': None,
                 "nics": [
                     {"net-id": "e89aa5fd-6b0a-436d-a75c-1545d34d5331"}
                 ]
@@ -179,7 +177,6 @@ class TestClusterController(trove_testtools.TestCase):
                 "flavor_id": "1234",
                 "availability_zone": "az",
                 'modules': None,
-                'region_name': None,
                 "nics": [
                     {"net-id": "e89aa5fd-6b0a-436d-a75c-1545d34d5331"}
                 ]
@@ -196,7 +193,7 @@ class TestClusterController(trove_testtools.TestCase):
         self.controller.create(req, body, tenant_id)
         mock_cluster_create.assert_called_with(context, 'products',
                                                datastore, datastore_version,
-                                               instances, {}, None, None)
+                                               instances, {}, None)
 
     @patch.object(Cluster, 'load')
     def test_show_cluster(self,

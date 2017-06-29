@@ -39,9 +39,9 @@ class Configurations(object):
     @staticmethod
     def load(context):
         if context is None:
-            raise TypeError(_("Argument context not defined."))
+            raise TypeError("Argument context not defined.")
         elif id is None:
-            raise TypeError(_("Argument is not defined."))
+            raise TypeError("Argument is not defined.")
 
         if context.is_admin:
             db_info = DBConfiguration.find_all(deleted=False)
@@ -209,21 +209,6 @@ class Configuration(object):
             item["deleted_at"] = None
             DBConfigurationParameter.save(item)
 
-    @staticmethod
-    def find(context, configuration_id, datastore_version_id):
-        try:
-            info = Configuration.load(context, configuration_id)
-            if (info.datastore_version_id == datastore_version_id):
-                return Configuration(context, configuration_id)
-        except exception.ModelNotFoundError:
-            raise exception.NotFound(
-                message='Configuration group id: %s could not be found.'
-                % configuration_id)
-
-        raise exception.ConfigurationDatastoreNotMatchInstance(
-            config_datastore_version=info.datastore_version_id,
-            instance_datastore_version=datastore_version_id)
-
 
 class DBConfiguration(dbmodels.DatabaseModelBase):
     _data_fields = ['name', 'description', 'tenant_id', 'datastore_version_id',
@@ -271,7 +256,6 @@ class DBDatastoreConfigurationParameters(dbmodels.DatabaseModelBase):
 
 
 class DatastoreConfigurationParameters(object):
-
     def __init__(self, db_info):
         self.db_info = db_info
 

@@ -15,11 +15,11 @@
 #
 
 import datetime
-import operator
 import os
 
 from oslo_log import log as logging
 
+from trove.common import cfg
 from trove.common import exception
 from trove.common.i18n import _
 from trove.common import stream_codecs
@@ -28,6 +28,7 @@ from trove.guestagent.common import operating_system
 
 
 LOG = logging.getLogger(__name__)
+CONF = cfg.CONF
 
 
 class ModuleManager(object):
@@ -42,12 +43,12 @@ class ModuleManager(object):
 
     @classmethod
     def get_current_timestamp(cls):
-        return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[0:22]
+        return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     @classmethod
     def apply_module(cls, driver, module_type, name, tenant,
                      datastore, ds_version, contents, module_id, md5,
-                     auto_apply, visible, admin_module):
+                     auto_apply, visible):
         tenant = tenant or cls.MODULE_APPLY_TO_ALL
         datastore = datastore or cls.MODULE_APPLY_TO_ALL
         ds_version = ds_version or cls.MODULE_APPLY_TO_ALL
@@ -58,9 +59,9 @@ class ModuleManager(object):
         now = cls.get_current_timestamp()
         default_result = cls.build_default_result(
             module_type, name, tenant, datastore,
-            ds_version, module_id, md5,
-            auto_apply, visible, now, admin_module)
+            ds_version, module_id, md5, auto_apply, visible, now)
         result = cls.read_module_result(module_dir, default_result)
+        admin_module = cls.is_admin_module(tenant, auto_apply, visible)
         try:
             driver.configure(name, datastore, ds_version, data_file)
             applied, message = driver.apply(
@@ -84,7 +85,7 @@ class ModuleManager(object):
             result['tenant'] = tenant
             result['auto_apply'] = auto_apply
             result['visible'] = visible
-            result['is_admin'] = admin_module
+            result['admin_only'] = admin_module
             cls.write_module_result(module_dir, result)
         return result
 
@@ -114,7 +115,8 @@ class ModuleManager(object):
     @classmethod
     def build_default_result(cls, module_type, name, tenant,
                              datastore, ds_version, module_id, md5,
-                             auto_apply, visible, now, admin_module):
+                             auto_apply, visible, now):
+        admin_module = cls.is_admin_module(tenant, auto_apply, visible)
         result = {
             'type': module_type,
             'name': name,
@@ -130,7 +132,7 @@ class ModuleManager(object):
             'removed': None,
             'auto_apply': auto_apply,
             'visible': visible,
-            'is_admin': admin_module,
+            'admin_only': admin_module,
             'contents': None,
         }
         return result
@@ -183,9 +185,7 @@ class ModuleManager(object):
                     (is_admin or result.get('visible'))):
                 if include_contents:
                     codec = stream_codecs.Base64Codec()
-                    # keep admin_only for backwards compatibility
-                    if not is_admin and (result.get('is_admin') or
-                                         result.get('admin_only')):
+                    if not is_admin and result.get('admin_only'):
                         contents = (
                             "Must be admin to retrieve contents for module %s"
                             % result.get('name', 'Unknown'))
@@ -197,7 +197,6 @@ class ModuleManager(object):
                         result['contents'] = operating_system.read_file(
                             contents_file, codec=codec, decode=False)
                 results.append(result)
-        results.sort(key=operator.itemgetter('updated'), reverse=True)
         return results
 
     @classmethod

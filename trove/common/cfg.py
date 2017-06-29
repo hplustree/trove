@@ -29,11 +29,6 @@ from trove.version import version_info as version
 
 LOG = logging.getLogger(__name__)
 UNKNOWN_SERVICE_ID = 'unknown-service-id-error'
-HEAT_REMOVAL_DEPRECATION_WARNING = _('Support for heat templates in Trove is '
-                                     'scheduled for removal. You will no '
-                                     'longer be able to provide a heat '
-                                     'template to Trove for the provisioning '
-                                     'of resources.')
 
 path_opts = [
     cfg.StrOpt('pybasedir',
@@ -76,34 +71,18 @@ common_opts = [
                help='Service type to use when searching catalog.'),
     cfg.StrOpt('cinder_endpoint_type', default='publicURL',
                help='Service endpoint type to use when searching catalog.'),
-    cfg.URIOpt('heat_url', deprecated_for_removal=True,
-               deprecated_reason=HEAT_REMOVAL_DEPRECATION_WARNING,
-               help='URL without the tenant segment.'),
+    cfg.URIOpt('heat_url', help='URL without the tenant segment.'),
     cfg.StrOpt('heat_service_type', default='orchestration',
-               deprecated_for_removal=True,
-               deprecated_reason=HEAT_REMOVAL_DEPRECATION_WARNING,
                help='Service type to use when searching catalog.'),
     cfg.StrOpt('heat_endpoint_type', default='publicURL',
-               deprecated_for_removal=True,
-               deprecated_reason=HEAT_REMOVAL_DEPRECATION_WARNING,
                help='Service endpoint type to use when searching catalog.'),
     cfg.URIOpt('swift_url', help='URL ending in ``AUTH_``.'),
     cfg.StrOpt('swift_service_type', default='object-store',
                help='Service type to use when searching catalog.'),
     cfg.StrOpt('swift_endpoint_type', default='publicURL',
                help='Service endpoint type to use when searching catalog.'),
-    cfg.URIOpt('glance_url', help='URL ending in ``AUTH_``.'),
-    cfg.StrOpt('glance_service_type', default='image',
-               help='Service type to use when searching catalog.'),
-    cfg.StrOpt('glance_endpoint_type', default='publicURL',
-               help='Service endpoint type to use when searching catalog.'),
     cfg.URIOpt('trove_auth_url', default='http://0.0.0.0:5000/v2.0',
                help='Trove authentication URL.'),
-    cfg.StrOpt('trove_url', help='URL without the tenant segment.'),
-    cfg.StrOpt('trove_service_type', default='database',
-               help='Service type to use when searching catalog.'),
-    cfg.StrOpt('trove_endpoint_type', default='publicURL',
-               help='Service endpoint type to use when searching catalog.'),
     cfg.IPOpt('host', default='0.0.0.0',
               help='Host to listen for RPC messages.'),
     cfg.IntOpt('report_interval', default=30,
@@ -219,8 +198,7 @@ common_opts = [
     cfg.BoolOpt('use_nova_server_volume', default=False,
                 help='Whether to provision a Cinder volume for the '
                      'Nova instance.'),
-    cfg.BoolOpt('use_heat', default=False, deprecated_for_removal=True,
-                deprecated_reason=HEAT_REMOVAL_DEPRECATION_WARNING,
+    cfg.BoolOpt('use_heat', default=False,
                 help='Use Heat for provisioning.'),
     cfg.StrOpt('device_path', default='/dev/vdb',
                help='Device path for volume if volume support is enabled.'),
@@ -237,8 +215,7 @@ common_opts = [
                help='Maximum time (in seconds) to wait for a server delete.'),
     cfg.IntOpt('volume_time_out', default=60,
                help='Maximum time (in seconds) to wait for a volume attach.'),
-    cfg.IntOpt('heat_time_out', default=60, deprecated_for_removal=True,
-               deprecated_reason=HEAT_REMOVAL_DEPRECATION_WARNING,
+    cfg.IntOpt('heat_time_out', default=60,
                help='Maximum time (in seconds) to wait for a Heat request to '
                     'complete.'),
     cfg.IntOpt('reboot_time_out', default=60 * 2,
@@ -331,24 +308,17 @@ common_opts = [
     cfg.StrOpt('remote_cinder_client',
                default='trove.common.remote.cinder_client',
                help='Client to send Cinder calls to.'),
-    cfg.StrOpt('remote_heat_client', deprecated_for_removal=True,
-               deprecated_reason=HEAT_REMOVAL_DEPRECATION_WARNING,
+    cfg.StrOpt('remote_heat_client',
                default='trove.common.remote.heat_client',
                help='Client to send Heat calls to.'),
     cfg.StrOpt('remote_swift_client',
                default='trove.common.remote.swift_client',
                help='Client to send Swift calls to.'),
-    cfg.StrOpt('remote_trove_client',
-               default='trove.common.trove_remote.trove_client',
-               help='Client to send Trove calls to.'),
-    cfg.StrOpt('remote_glance_client',
-               default='trove.common.glance_remote.glance_client',
-               help='Client to send Glance calls to.'),
     cfg.StrOpt('exists_notification_transformer',
                help='Transformer for exists notifications.'),
     cfg.IntOpt('exists_notification_interval', default=3600,
                help='Seconds to wait between pushing events.'),
-    cfg.IntOpt('quota_notification_interval',
+    cfg.IntOpt('quota_notification_interval', default=3600,
                help='Seconds to wait between pushing events.'),
     cfg.DictOpt('notification_service_id',
                 default={'mysql': '2f3ff068-2bfb-4f70-9a9d-a6bb65bc084b',
@@ -437,12 +407,6 @@ common_opts = [
     cfg.ListOpt('module_types', default=['ping', 'new_relic_license'],
                 help='A list of module types supported. A module type '
                      'corresponds to the name of a ModuleDriver.'),
-    cfg.IntOpt('module_reapply_max_batch_size', default=50,
-               help='The maximum number of instances to reapply a module to '
-                    'at the same time.'),
-    cfg.IntOpt('module_reapply_min_batch_delay', default=2,
-               help='The minimum delay (in seconds) between subsequent '
-                    'module batch reapply executions.'),
     cfg.StrOpt('guest_log_container_name',
                default='database_logs',
                help='Name of container that stores guest log components.'),
@@ -450,16 +414,6 @@ common_opts = [
                help='Maximum size of a chunk saved in guest log container.'),
     cfg.IntOpt('guest_log_expiry', default=2592000,
                help='Expiry (in seconds) of objects in guest log container.'),
-    cfg.BoolOpt('enable_secure_rpc_messaging', default=True,
-                help='Should RPC messaging traffic be secured by encryption.'),
-    cfg.StrOpt('taskmanager_rpc_encr_key',
-               default='bzH6y0SGmjuoY0FNSTptrhgieGXNDX6PIhvz',
-               help='Key (OpenSSL aes_cbc) for taskmanager RPC encryption.'),
-    cfg.StrOpt('inst_rpc_key_encr_key',
-               default='emYjgHFqfXNB1NGehAFIUeoyw4V4XwWHEaKP',
-               help='Key (OpenSSL aes_cbc) to encrypt instance keys in DB.'),
-    cfg.StrOpt('instance_rpc_encr_key',
-               help='Key (OpenSSL aes_cbc) for instance RPC encryption.'),
 ]
 
 
@@ -944,26 +898,6 @@ cassandra_opts = [
                help='Character length of generated passwords.',
                deprecated_name='default_password_length',
                deprecated_group='DEFAULT'),
-    cfg.BoolOpt('enable_cluster_instance_backup',
-                default=False,
-                help='Allows backup of single instance in the cluster.'),
-    cfg.BoolOpt('enable_saslauthd', default=False,
-                help='Enable the saslauth daemon.'),
-    cfg.StrOpt('user_controller',
-               default='trove.extensions.cassandra.service.'
-               'CassandraUserController',
-               help='User controller implementation.'),
-    cfg.StrOpt('database_controller',
-               default='trove.extensions.cassandra.service.'
-               'CassandraDatabaseController',
-               help='Database controller implementation.'),
-    cfg.StrOpt('user_access_controller',
-               default='trove.extensions.cassandra.service.'
-               'CassandraUserAccessController',
-               help='User access controller implementation.'),
-    cfg.IntOpt('node_sync_time', default=60,
-               help='Time (in seconds) given to a node after a state change '
-               'to finish rejoining the cluster.'),
 ]
 
 # Couchbase
@@ -1501,19 +1435,18 @@ mariadb_opts = [
 upgrade_levels = cfg.OptGroup(
     'upgrade_levels',
     title='RPC upgrade levels group for handling versions',
-    help='Contains the support version caps (Openstack Release) for '
-    'each RPC API')
+    help='Contains the support version caps for each RPC API')
 
 rpcapi_cap_opts = [
     cfg.StrOpt(
-        'taskmanager', default='latest',
+        'taskmanager', default="icehouse",
         help='Set a version cap for messages sent to taskmanager services'),
     cfg.StrOpt(
-        'guestagent', default='latest',
+        'guestagent', default="icehouse",
         help='Set a version cap for messages sent to guestagent services'),
     cfg.StrOpt(
-        'conductor', default='latest',
-        help='Set Openstack Release compatibility for conductor services'),
+        'conductor', default="icehouse",
+        help='Set a version cap for messages sent to conductor services'),
 ]
 
 CONF = cfg.CONF
@@ -1605,21 +1538,23 @@ def get_configuration_property(property_name):
 def set_api_config_defaults():
     """This method updates all configuration default values."""
 
-    cors.set_defaults(
-        allow_headers=['X-Auth-Token',
-                       'X-Identity-Status',
-                       'X-Roles',
-                       'X-Service-Catalog',
-                       'X-User-Id',
-                       'X-Tenant-Id',
-                       'X-OpenStack-Request-ID'],
-        expose_headers=['X-Auth-Token',
-                        'X-Subject-Token',
-                        'X-Service-Token',
-                        'X-OpenStack-Request-ID'],
-        allow_methods=['GET',
-                       'PUT',
-                       'POST',
-                       'DELETE',
-                       'PATCH']
-    )
+    # CORS Middleware Defaults
+    # TODO(krotscheck): Update with https://review.openstack.org/#/c/285368/
+    cfg.set_defaults(cors.CORS_OPTS,
+                     allow_headers=['X-Auth-Token',
+                                    'X-Identity-Status',
+                                    'X-Roles',
+                                    'X-Service-Catalog',
+                                    'X-User-Id',
+                                    'X-Tenant-Id',
+                                    'X-OpenStack-Request-ID'],
+                     expose_headers=['X-Auth-Token',
+                                     'X-Subject-Token',
+                                     'X-Service-Token',
+                                     'X-OpenStack-Request-ID'],
+                     allow_methods=['GET',
+                                    'PUT',
+                                    'POST',
+                                    'DELETE',
+                                    'PATCH']
+                     )

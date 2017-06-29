@@ -63,7 +63,7 @@ class BaseDbStatus(object):
 
     def __init__(self):
         if self._instance is not None:
-            raise RuntimeError(_("Cannot instantiate twice."))
+            raise RuntimeError("Cannot instantiate twice.")
         self.status = None
         self.restart_mode = False
 
@@ -97,19 +97,16 @@ class BaseDbStatus(object):
         """Called before restarting DB server."""
         self.restart_mode = True
 
-    def set_ready(self):
-        prepare_end_file = guestagent_utils.build_file_path(
-            self.GUESTAGENT_DIR, self.PREPARE_END_FILENAME)
-        operating_system.write_file(prepare_end_file, '')
-        self.__refresh_prepare_completed()
-
     def end_install(self, error_occurred=False, post_processing=False):
         """Called after prepare has ended."""
 
         # Set the "we're done" flag if there's no error and
         # no post_processing is necessary
         if not (error_occurred or post_processing):
-            self.set_ready()
+            prepare_end_file = guestagent_utils.build_file_path(
+                self.GUESTAGENT_DIR, self.PREPARE_END_FILENAME)
+            operating_system.write_file(prepare_end_file, '')
+            self.__refresh_prepare_completed()
 
         final_status = None
         if error_occurred:

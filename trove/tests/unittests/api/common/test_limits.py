@@ -45,7 +45,6 @@ class BaseLimitTestSuite(trove_testtools.TestCase):
 
     def setUp(self):
         super(BaseLimitTestSuite, self).setUp()
-        self.context = trove_testtools.TroveTestContext(self)
         self.absolute_limits = {"max_instances": 55,
                                 "max_volumes": 100,
                                 "max_backups": 40}
@@ -61,7 +60,7 @@ class LimitsControllerTest(BaseLimitTestSuite):
         limit_controller = LimitsController()
 
         req = MagicMock()
-        req.environ = {'trove.context': self.context}
+        req.environ = {}
 
         view = limit_controller.index(req, "test_tenant_id")
         expected = {'limits': [{'verb': 'ABSOLUTE'}]}
@@ -123,7 +122,7 @@ class LimitsControllerTest(BaseLimitTestSuite):
                                        hard_limit=55)}
 
         req = MagicMock()
-        req.environ = {"trove.limits": limits, 'trove.context': self.context}
+        req.environ = {"trove.limits": limits}
 
         with patch.object(QUOTAS, 'get_all_quotas_by_tenant',
                           return_value=abs_limits):
@@ -223,7 +222,7 @@ class LimitMiddlewareTest(BaseLimitTestSuite):
         response = request.get_response(self.app)
         self.assertEqual(413, response.status_int)
 
-        self.assertIn('Retry-After', response.headers)
+        self.assertTrue('Retry-After' in response.headers)
         retry_after = int(response.headers['Retry-After'])
         self.assertAlmostEqual(retry_after, 60, 1)
 
@@ -232,7 +231,7 @@ class LimitMiddlewareTest(BaseLimitTestSuite):
         value = body["overLimit"]["details"].strip()
         self.assertEqual(expected, value)
 
-        self.assertIn("retryAfter", body["overLimit"])
+        self.assertTrue("retryAfter" in body["overLimit"])
         retryAfter = body["overLimit"]["retryAfter"]
         self.assertEqual("60", retryAfter)
 

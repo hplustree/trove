@@ -67,7 +67,7 @@ class FakeOptGroup(object):
         self.icmp = icmp
 
 
-class fake_Server(object):
+class fake_Server:
     def __init__(self):
         self.id = None
         self.name = None
@@ -80,7 +80,7 @@ class fake_Server(object):
         self.status = 'ACTIVE'
 
 
-class fake_ServerManager(object):
+class fake_ServerManager:
     def create(self, name, image_id, flavor_id, files, userdata,
                security_groups, block_device_mapping, availability_zone=None,
                nics=None, config_drive=False,
@@ -99,7 +99,7 @@ class fake_ServerManager(object):
         return server
 
 
-class fake_nova_client(object):
+class fake_nova_client:
     def __init__(self):
         self.servers = fake_ServerManager()
 
@@ -245,8 +245,7 @@ class FreshInstanceTasksTest(trove_testtools.TestCase):
             None, None, None, datastore_manager, None, None, None)
         self.assertEqual(server.userdata, self.userdata)
 
-    @patch.object(DBInstance, 'get_by')
-    def test_create_instance_guestconfig(self, patch_get_by):
+    def test_create_instance_guestconfig(self):
         def fake_conf_getter(*args, **kwargs):
             if args[0] == 'guest_config':
                 return self.guestconfig
@@ -269,8 +268,7 @@ class FreshInstanceTasksTest(trove_testtools.TestCase):
             self.guestconfig_content,
             files['/etc/trove/conf.d/trove-guestagent.conf'])
 
-    @patch.object(DBInstance, 'get_by')
-    def test_create_instance_guestconfig_compat(self, patch_get_by):
+    def test_create_instance_guestconfig_compat(self):
         def fake_conf_getter(*args, **kwargs):
             if args[0] == 'guest_config':
                 return self.guestconfig
@@ -462,8 +460,7 @@ class FreshInstanceTasksTest(trove_testtools.TestCase):
 
     @patch.object(trove.guestagent.api.API, 'attach_replication_slave')
     @patch.object(rpc, 'get_client')
-    @patch.object(DBInstance, 'get_by')
-    def test_attach_replication_slave(self, mock_get_by, mock_get_client,
+    def test_attach_replication_slave(self, mock_get_client,
                                       mock_attach_replication_slave):
         mock_flavor = {'id': 8, 'ram': 768, 'name': 'bigger_flavor'}
         snapshot = {'replication_strategy': 'MysqlGTIDReplication',
@@ -486,7 +483,6 @@ class FreshInstanceTasksTest(trove_testtools.TestCase):
     @patch.object(trove.guestagent.api.API, 'attach_replication_slave',
                   side_effect=GuestError)
     @patch('trove.taskmanager.models.LOG')
-    @patch.object(DBInstance, 'get_by')
     def test_error_attach_replication_slave(self, *args):
         mock_flavor = {'id': 8, 'ram': 768, 'name': 'bigger_flavor'}
         snapshot = {'replication_strategy': 'MysqlGTIDReplication',
@@ -514,7 +510,7 @@ class ResizeVolumeTest(trove_testtools.TestCase):
                                                             self.old_vol_size,
                                                             self.new_vol_size)
 
-        class FakeGroup(object):
+        class FakeGroup():
             def __init__(self):
                 self.mount_point = 'var/lib/mysql'
                 self.device_path = '/dev/vdb'

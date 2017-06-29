@@ -236,9 +236,9 @@ class UnprocessableEntity(TroveError):
     message = _("Unable to process the contained request.")
 
 
-class ConfigurationNotSupported(UnprocessableEntity):
+class UnauthorizedRequest(TroveError):
 
-    message = _("Configuration groups not supported by the datastore.")
+    message = _("Unauthorized request.")
 
 
 class CannotResizeToSameSize(TroveError):
@@ -307,11 +307,6 @@ class PollTimeOut(TroveError):
 class Forbidden(TroveError):
 
     message = _("User does not have admin privileges.")
-
-
-class PolicyNotAuthorized(Forbidden):
-
-    message = _("Policy doesn't allow %(action)s to be performed.")
 
 
 class InvalidModelError(TroveError):
@@ -543,10 +538,6 @@ class ModuleInvalid(Forbidden):
     message = _("The module is invalid: %(reason)s")
 
 
-class InstanceNotFound(NotFound):
-    message = _("Instance '%(instance)s' cannot be found.")
-
-
 class ClusterNotFound(NotFound):
     message = _("Cluster '%(cluster)s' cannot be found.")
 
@@ -631,8 +622,3 @@ class ImageNotFound(NotFound):
 class DatastoreVersionAlreadyExists(BadRequest):
 
     message = _("A datastore version with the name '%(name)s' already exists.")
-
-
-class LogAccessForbidden(Forbidden):
-
-    message = _("You must be admin to %(action)s log '%(log)s'.")

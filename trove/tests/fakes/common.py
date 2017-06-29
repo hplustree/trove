@@ -17,6 +17,11 @@
 
 from novaclient import exceptions as nova_exceptions
 
+from trove.common import cfg
+
+
+CONF = cfg.CONF
+
 
 def authorize(context):
     if not context.is_admin:

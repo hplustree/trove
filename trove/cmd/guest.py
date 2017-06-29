@@ -25,20 +25,17 @@ from oslo_service import service as openstack_service
 from trove.common import cfg
 from trove.common import debug_utils
 from trove.common.i18n import _LE
-from trove.guestagent import api as guest_api
 
 CONF = cfg.CONF
 # The guest_id opt definition must match the one in common/cfg.py
 CONF.register_opts([openstack_cfg.StrOpt('guest_id', default=None,
-                                         help="ID of the Guest Instance."),
-                    openstack_cfg.StrOpt('instance_rpc_encr_key',
-                                         help=('Key (OpenSSL aes_cbc) for '
-                                               'instance RPC encryption.'))])
+                                         help="ID of the Guest Instance.")])
 
 
 def main():
     cfg.parse_args(sys.argv)
     logging.setup(CONF, None)
+
     debug_utils.setup()
 
     from trove.guestagent import dbaas
@@ -53,9 +50,6 @@ def main():
                "was not injected into the guest or not read by guestagent"))
         raise RuntimeError(msg)
 
-    # BUG(1650518): Cleanup in the Pike release
-    # make it fatal if CONF.instance_rpc_encr_key is None
-
     # rpc module must be loaded after decision about thread monkeypatching
     # because if thread module is not monkeypatched we can't use eventlet
     # executor from oslo_messaging library.
@@ -63,11 +57,10 @@ def main():
     rpc.init(CONF)
 
     from trove.common.rpc import service as rpc_service
+    from trove.common.rpc import version as rpc_version
     server = rpc_service.RpcService(
-        key=CONF.instance_rpc_encr_key,
-        topic="guestagent.%s" % CONF.guest_id,
         manager=manager, host=CONF.guest_id,
-        rpc_api_version=guest_api.API.API_LATEST_VERSION)
+        rpc_api_version=rpc_version.RPC_API_VERSION)
 
     launcher = openstack_service.launch(CONF, server)
     launcher.wait()

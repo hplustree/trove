@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import netaddr
 import os
 import re
 import time
@@ -87,10 +86,7 @@ class InstanceTestInfo(object):
         self.id = None  # The ID of the instance in the database.
         self.local_id = None
         self.address = None
-        self.nics = None  # The dict of type/id for nics used on the instance.
-        shared_network = CONFIG.get('shared_network', None)
-        if shared_network:
-            self.nics = [{'net-id': shared_network}]
+        self.nics = None  # The dict of type/id for nics used on the intance.
         self.initial_result = None  # The initial result from the create call.
         self.user_ip = None  # The IP address of the instance, given to user.
         self.infra_ip = None  # The infrastructure network IP address.
@@ -130,14 +126,16 @@ class InstanceTestInfo(object):
     def get_address(self):
         result = self.dbaas_admin.mgmt.instances.show(self.id)
         if not hasattr(result, 'hostname'):
-            try:
-                return next(str(ip) for ip in result.ip
-                            if netaddr.valid_ipv4(ip))
-            except StopIteration:
-                fail("No IPV4 ip found")
+            return result.ip[0]
         else:
-            return [str(ip) for ip in result.server['addresses']
-                    if netaddr.valid_ipv4(ip)]
+            return result.server['addresses']
+
+    def get_address_one(id):
+        result = InstanceTestInfo.dbaas_admin.mgmt.instances.show(id)
+        if not hasattr(result, 'hostname'):
+            return result.ip[0]
+        else:
+            return result.server['addresses']
 
     def get_local_id(self):
         mgmt_instance = self.dbaas_admin.management.show(self.id)
@@ -266,8 +264,7 @@ class CreateInstanceQuotaTest(unittest.TestCase):
                           dbaas.instances.create,
                           self.test_info.name,
                           self.test_info.dbaas_flavor_href,
-                          self.test_info.volume,
-                          nics=instance_info.nics)
+                          self.test_info.volume)
 
     def test_update_quota_invalid_resource_should_fail(self):
         quota_dict = {'invalid_resource': 100}
@@ -307,8 +304,7 @@ class CreateInstanceQuotaTest(unittest.TestCase):
                       dbaas.instances.create,
                       self.test_info.name,
                       self.test_info.dbaas_flavor_href,
-                      self.test_info.volume,
-                      nics=instance_info.nics)
+                      self.test_info.volume)
 
         assert_equal(413, dbaas.last_http_code)
 
@@ -327,8 +323,7 @@ class CreateInstanceQuotaTest(unittest.TestCase):
                       dbaas.instances.create,
                       self.test_info.name,
                       self.test_info.dbaas_flavor_href,
-                      self.test_info.volume,
-                      nics=instance_info.nics)
+                      self.test_info.volume)
 
         assert_equal(413, dbaas.last_http_code)
 
@@ -370,8 +365,7 @@ class CreateInstanceFail(object):
         result = dbaas.instances.create(instance_name,
                                         instance_info.dbaas_flavor_href,
                                         volume, databases,
-                                        availability_zone="BAD_ZONE",
-                                        nics=instance_info.nics)
+                                        availability_zone="BAD_ZONE")
 
         poll_until(self.instance_in_error(result.id))
         instance = dbaas.instances.get(result.id)
@@ -408,8 +402,7 @@ class CreateInstanceFail(object):
             volume = None
         assert_raises(exceptions.BadRequest, dbaas.instances.create,
                       instance_name, '',
-                      volume, databases,
-                      nics=instance_info.nics)
+                      volume, databases)
         assert_equal(400, dbaas.last_http_code)
 
     @test(enabled=VOLUME_SUPPORT)
@@ -419,8 +412,7 @@ class CreateInstanceFail(object):
         volume = {}
         assert_raises(exceptions.BadRequest, dbaas.instances.create,
                       instance_name, instance_info.dbaas_flavor_href,
-                      volume, databases,
-                      nics=instance_info.nics)
+                      volume, databases)
         assert_equal(400, dbaas.last_http_code)
 
     @test(enabled=VOLUME_SUPPORT)
@@ -430,8 +422,7 @@ class CreateInstanceFail(object):
         volume = {'size': None}
         assert_raises(exceptions.BadRequest, dbaas.instances.create,
                       instance_name, instance_info.dbaas_flavor_href,
-                      volume, databases,
-                      nics=instance_info.nics)
+                      volume, databases)
         assert_equal(400, dbaas.last_http_code)
 
     @test(enabled=not VOLUME_SUPPORT)
@@ -441,8 +432,7 @@ class CreateInstanceFail(object):
         volume = {'size': 2}
         assert_raises(exceptions.HTTPNotImplemented, dbaas.instances.create,
                       instance_name, instance_info.dbaas_flavor_href,
-                      volume, databases,
-                      nics=instance_info.nics)
+                      volume, databases)
         assert_equal(501, dbaas.last_http_code)
 
     def test_create_failure_with_volume_size_and_disabled_for_datastore(self):
@@ -453,8 +443,7 @@ class CreateInstanceFail(object):
         volume = {'size': 2}
         assert_raises(exceptions.HTTPNotImplemented, dbaas.instances.create,
                       instance_name, instance_info.dbaas_flavor_href,
-                      volume, databases, datastore=datastore,
-                      nics=instance_info.nics)
+                      volume, databases, datastore=datastore)
         assert_equal(501, dbaas.last_http_code)
 
     @test(enabled=EPHEMERAL_SUPPORT)
@@ -464,8 +453,7 @@ class CreateInstanceFail(object):
         flavor_name = CONFIG.values.get('instance_flavor_name', 'm1.tiny')
         flavors = dbaas.find_flavors_by_name(flavor_name)
         assert_raises(exceptions.BadRequest, dbaas.instances.create,
-                      instance_name, flavors[0].id, None, databases,
-                      nics=instance_info.nics)
+                      instance_name, flavors[0].id, None, databases)
         assert_equal(400, dbaas.last_http_code)
 
     @test
@@ -478,8 +466,7 @@ class CreateInstanceFail(object):
         databases = []
         assert_raises(exceptions.BadRequest, dbaas.instances.create,
                       instance_name, instance_info.dbaas_flavor_href,
-                      volume, databases,
-                      nics=instance_info.nics)
+                      volume, databases)
         assert_equal(400, dbaas.last_http_code)
 
     @test
@@ -492,8 +479,7 @@ class CreateInstanceFail(object):
         databases = []
         assert_raises(exceptions.BadRequest, dbaas.instances.create,
                       instance_name, instance_info.dbaas_flavor_href,
-                      volume, databases,
-                      nics=instance_info.nics)
+                      volume, databases)
         assert_equal(400, dbaas.last_http_code)
 
     @test
@@ -532,8 +518,7 @@ class CreateInstanceFail(object):
             assert_raises(exceptions.NotFound,
                           dbaas.instances.create, instance_name,
                           instance_info.dbaas_flavor_href,
-                          volume, databases, users,
-                          nics=instance_info.nics)
+                          volume, databases, users)
         except exceptions.BadRequest as e:
             assert_equal(e.message,
                          "Please specify datastore. No default datastore "
@@ -556,8 +541,7 @@ class CreateInstanceFail(object):
                           dbaas.instances.create, instance_name,
                           instance_info.dbaas_flavor_href,
                           volume, databases, users,
-                          datastore=datastore,
-                          nics=instance_info.nics)
+                          datastore=datastore)
         except exceptions.BadRequest as e:
             assert_equal(e.message,
                          "Default version for datastore '%s' not found." %
@@ -578,8 +562,7 @@ class CreateInstanceFail(object):
                           dbaas.instances.create, instance_name,
                           instance_info.dbaas_flavor_href,
                           volume, databases, users,
-                          datastore=datastore,
-                          nics=instance_info.nics)
+                          datastore=datastore)
         except exceptions.BadRequest as e:
             assert_equal(e.message,
                          "Datastore '%s' cannot be found." %
@@ -602,8 +585,7 @@ class CreateInstanceFail(object):
                           instance_info.dbaas_flavor_href,
                           volume, databases, users,
                           datastore=datastore,
-                          datastore_version=datastore_version,
-                          nics=instance_info.nics)
+                          datastore_version=datastore_version)
         except exceptions.BadRequest as e:
             assert_equal(e.message,
                          "Datastore version '%s' cannot be found." %
@@ -626,8 +608,7 @@ class CreateInstanceFail(object):
                           instance_info.dbaas_flavor_href,
                           volume, databases, users,
                           datastore=datastore,
-                          datastore_version=datastore_version,
-                          nics=instance_info.nics)
+                          datastore_version=datastore_version)
         except exceptions.BadRequest as e:
             assert_equal(e.message,
                          "Datastore version '%s' is not active." %
@@ -687,6 +668,10 @@ class CreateInstance(object):
         else:
             instance_info.volume = None
 
+        shared_network = CONFIG.get('shared_network', None)
+        if shared_network:
+            instance_info.nics = [{'net-id': shared_network}]
+
         if create_new_instance():
             instance_info.initial_result = dbaas.instances.create(
                 instance_info.name,
@@ -718,8 +703,7 @@ class CreateInstance(object):
 
         # Check these attrs only are returned in create response
         allowed_attrs = ['created', 'flavor', 'addresses', 'id', 'links',
-                         'name', 'status', 'updated', 'datastore', 'fault',
-                         'region']
+                         'name', 'status', 'updated', 'datastore', 'fault']
         if ROOT_ON_CREATE:
             allowed_attrs.append('password')
         if VOLUME_SUPPORT:
@@ -776,8 +760,7 @@ class CreateInstanceFlavors(object):
         else:
             volume = None
         self.result = dbaas.instances.create(instance_name, flavor_id, volume,
-                                             databases,
-                                             nics=instance_info.nics)
+                                             databases)
         poll_until(self._result_is_active)
         self._delete_async(self.result.id)
 
@@ -816,8 +799,7 @@ class CreateInstanceWithNeutron(unittest.TestCase):
         self.result = self.dbaas_client.instances.create(
             self.instance_name,
             instance_info.dbaas_flavor_href,
-            volume, databases,
-            nics=instance_info.nics)
+            volume, databases)
         self.instance_id = self.result.id
 
         def verify_instance_is_active():
@@ -1163,8 +1145,7 @@ class TestInstanceListing(object):
     @test
     def test_index_list(self):
         allowed_attrs = ['id', 'links', 'name', 'status', 'flavor',
-                         'datastore', 'ip', 'hostname', 'replica_of',
-                         'region']
+                         'datastore', 'ip', 'hostname', 'replica_of']
         if VOLUME_SUPPORT:
             allowed_attrs.append('volume')
         instances = dbaas.instances.list()
@@ -1185,7 +1166,7 @@ class TestInstanceListing(object):
     def test_get_instance(self):
         allowed_attrs = ['created', 'databases', 'flavor', 'hostname', 'id',
                          'links', 'name', 'status', 'updated', 'ip',
-                         'datastore', 'fault', 'region']
+                         'datastore', 'fault']
         if VOLUME_SUPPORT:
             allowed_attrs.append('volume')
         else:
@@ -1273,7 +1254,7 @@ class TestInstanceListing(object):
                          'flavor', 'guest_status', 'host', 'hostname', 'id',
                          'name', 'root_enabled_at', 'root_enabled_by',
                          'server_state_description', 'status', 'datastore',
-                         'updated', 'users', 'volume', 'fault', 'region']
+                         'updated', 'users', 'volume', 'fault']
         with CheckInstance(result._info) as check:
             check.contains_allowed_attrs(
                 result._info, allowed_attrs,
@@ -1636,7 +1617,7 @@ class CheckInstance(AttrCheck):
 
 
 @test(groups=[GROUP])
-class BadInstanceStatusBug(object):
+class BadInstanceStatusBug():
 
     @before_class()
     def setUp(self):
@@ -1668,8 +1649,7 @@ class BadInstanceStatusBug(object):
 
         result = self.client.instances.create('testbox',
                                               instance_info.dbaas_flavor_href,
-                                              size,
-                                              nics=instance_info.nics)
+                                              size)
         id = result.id
         self.instances.append(id)
 

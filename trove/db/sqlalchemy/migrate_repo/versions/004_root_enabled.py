@@ -18,6 +18,7 @@ from sqlalchemy.schema import MetaData
 
 from trove.db.sqlalchemy.migrate_repo.schema import create_tables
 from trove.db.sqlalchemy.migrate_repo.schema import DateTime
+from trove.db.sqlalchemy.migrate_repo.schema import drop_tables
 from trove.db.sqlalchemy.migrate_repo.schema import String
 from trove.db.sqlalchemy.migrate_repo.schema import Table
 
@@ -36,3 +37,8 @@ root_enabled_history = Table(
 def upgrade(migrate_engine):
     meta.bind = migrate_engine
     create_tables([root_enabled_history])
+
+
+def downgrade(migrate_engine):
+    meta.bind = migrate_engine
+    drop_tables([root_enabled_history])

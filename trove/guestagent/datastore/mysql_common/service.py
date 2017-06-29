@@ -34,7 +34,6 @@ from sqlalchemy.sql.expression import text
 
 from trove.common import cfg
 from trove.common.configurations import MySQLConfParser
-from trove.common.db.mysql import models
 from trove.common import exception
 from trove.common.exception import PollTimeOut
 from trove.common.i18n import _
@@ -47,6 +46,7 @@ from trove.guestagent.common import guestagent_utils
 from trove.guestagent.common import operating_system
 from trove.guestagent.common import sql_query
 from trove.guestagent.datastore import service
+from trove.guestagent.db import models
 from trove.guestagent import pkg
 
 ADMIN_USER_NAME = "os_admin"
@@ -243,7 +243,9 @@ class BaseMySqlAdmin(object):
             for db in db_result:
                 LOG.debug("\t db: %s." % db)
                 if db['grantee'] == "'%s'@'%s'" % (user.name, user.host):
-                    user.databases = db['table_schema']
+                    mysql_db = models.MySQLDatabase()
+                    mysql_db.name = db['table_schema']
+                    user.databases.append(mysql_db.serialize())
 
     def change_passwords(self, users):
         """Change the passwords of one or more existing users."""
@@ -254,7 +256,8 @@ class BaseMySqlAdmin(object):
                 user_dict = {'_name': item['name'],
                              '_host': item['host'],
                              '_password': item['password']}
-                user = models.MySQLUser.deserialize(user_dict)
+                user = models.MySQLUser()
+                user.deserialize(user_dict)
                 LOG.debug("\tDeserialized: %s." % user.__dict__)
                 uu = sql_query.SetPassword(user.name, host=user.host,
                                            new_password=user.password)
@@ -292,8 +295,8 @@ class BaseMySqlAdmin(object):
         """Create the list of specified databases."""
         with self.local_sql_client(self.mysql_app.get_engine()) as client:
             for item in databases:
-                mydb = models.MySQLSchema.deserialize(item)
-                mydb.check_create()
+                mydb = models.ValidatedMySQLDatabase()
+                mydb.deserialize(item)
                 cd = sql_query.CreateDatabase(mydb.name,
                                               mydb.character_set,
                                               mydb.collate)
@@ -306,37 +309,36 @@ class BaseMySqlAdmin(object):
         """
         with self.local_sql_client(self.mysql_app.get_engine()) as client:
             for item in users:
-                user = models.MySQLUser.deserialize(item)
-                user.check_create()
+                user = models.MySQLUser()
+                user.deserialize(item)
                 # TODO(cp16net):Should users be allowed to create users
                 # 'os_admin' or 'debian-sys-maint'
                 g = sql_query.Grant(user=user.name, host=user.host,
                                     clear=user.password)
                 t = text(str(g))
                 client.execute(t)
-                client.execute(FLUSH)
                 for database in user.databases:
-                    mydb = models.MySQLSchema.deserialize(database)
+                    mydb = models.ValidatedMySQLDatabase()
+                    mydb.deserialize(database)
                     g = sql_query.Grant(permissions='ALL', database=mydb.name,
                                         user=user.name, host=user.host,
                                         clear=user.password)
                     t = text(str(g))
                     client.execute(t)
-                    client.execute(FLUSH)
 
     def delete_database(self, database):
         """Delete the specified database."""
         with self.local_sql_client(self.mysql_app.get_engine()) as client:
-            mydb = models.MySQLSchema.deserialize(database)
-            mydb.check_delete()
+            mydb = models.ValidatedMySQLDatabase()
+            mydb.deserialize(database)
             dd = sql_query.DropDatabase(mydb.name)
             t = text(str(dd))
             client.execute(t)
 
     def delete_user(self, user):
         """Delete the specified user."""
-        mysql_user = models.MySQLUser.deserialize(user)
-        mysql_user.check_delete()
+        mysql_user = models.MySQLUser()
+        mysql_user.deserialize(user)
         self.delete_user_by_name(mysql_user.name, mysql_user.host)
 
     def delete_user_by_name(self, name, host='%'):
@@ -354,11 +356,9 @@ class BaseMySqlAdmin(object):
 
     def _get_user(self, username, hostname):
         """Return a single user matching the criteria."""
-        user = None
+        user = models.MySQLUser()
         try:
-            # Could possibly throw a ValueError here.
-            user = models.MySQLUser(name=username)
-            user.check_reserved()
+            user.name = username  # Could possibly throw a BadRequest here.
         except ValueError as ve:
             LOG.exception(_("Error Getting user information"))
             err_msg = encodeutils.exception_to_unicode(ve)
@@ -387,15 +387,11 @@ class BaseMySqlAdmin(object):
     def grant_access(self, username, hostname, databases):
         """Grant a user permission to use a given database."""
         user = self._get_user(username, hostname)
-        mydb = None  # cache the model as we just want name validation
+        mydb = models.ValidatedMySQLDatabase()
         with self.local_sql_client(self.mysql_app.get_engine()) as client:
             for database in databases:
                 try:
-                    if mydb:
-                        mydb.name = database
-                    else:
-                        mydb = models.MySQLSchema(name=database)
-                        mydb.check_reserved()
+                    mydb.name = database
                 except ValueError:
                     LOG.exception(_("Error granting access"))
                     raise exception.BadRequest(_(
@@ -456,13 +452,14 @@ class BaseMySqlAdmin(object):
             next_marker = None
             LOG.debug("database_names = %r." % database_names)
             for count, database in enumerate(database_names):
-                if limit is not None and count >= limit:
+                if count >= limit:
                     break
                 LOG.debug("database = %s." % str(database))
-                mysql_db = models.MySQLSchema(name=database[0],
-                                              character_set=database[1],
-                                              collate=database[2])
+                mysql_db = models.MySQLDatabase()
+                mysql_db.name = database[0]
                 next_marker = mysql_db.name
+                mysql_db.character_set = database[1]
+                mysql_db.collate = database[2]
                 databases.append(mysql_db.serialize())
         LOG.debug("databases = " + str(databases))
         if limit is not None and database_names.rowcount <= limit:
@@ -495,6 +492,7 @@ class BaseMySqlAdmin(object):
                   "be omitted from the listing: %s" % ignored_user_names)
         users = []
         with self.local_sql_client(self.mysql_app.get_engine()) as client:
+            mysql_user = models.MySQLUser()
             iq = sql_query.Query()  # Inner query.
             iq.columns = ['User', 'Host', "CONCAT(User, '@', Host) as Marker"]
             iq.tables = ['mysql.user']
@@ -519,12 +517,12 @@ class BaseMySqlAdmin(object):
             next_marker = None
             LOG.debug("result = " + str(result))
             for count, row in enumerate(result):
-                if limit is not None and count >= limit:
+                if count >= limit:
                     break
                 LOG.debug("user = " + str(row))
-                mysql_user = models.MySQLUser(name=row['User'],
-                                              host=row['Host'])
-                mysql_user.check_reserved()
+                mysql_user = models.MySQLUser()
+                mysql_user.name = row['User']
+                mysql_user.host = row['Host']
                 self._associate_dbs(mysql_user)
                 next_marker = row['Marker']
                 users.append(mysql_user.serialize())
@@ -664,7 +662,6 @@ class BaseMySqlApp(object):
                             host=localhost, grant_option=True, clear=password)
         t = text(str(g))
         client.execute(t)
-        client.execute(FLUSH)
         LOG.debug("Trove admin user '%s' created." % ADMIN_USER_NAME)
 
     @staticmethod
@@ -672,7 +669,7 @@ class BaseMySqlApp(object):
         """Generate and set a random root password and forget about it."""
         localhost = "localhost"
         uu = sql_query.SetPassword(
-            models.MySQLUser.root_username, host=localhost,
+            "root", host=localhost,
             new_password=utils.generate_random_password())
         t = text(str(uu))
         client.execute(t)
@@ -766,7 +763,7 @@ class BaseMySqlApp(object):
                                        shell=True)
         except KeyError:
             LOG.exception(_("Error enabling MySQL start on boot."))
-            raise RuntimeError(_("Service is not discovered."))
+            raise RuntimeError("Service is not discovered.")
 
     def _disable_mysql_on_boot(self):
         try:
@@ -774,7 +771,7 @@ class BaseMySqlApp(object):
                                        shell=True)
         except KeyError:
             LOG.exception(_("Error disabling MySQL start on boot."))
-            raise RuntimeError(_("Service is not discovered."))
+            raise RuntimeError("Service is not discovered.")
 
     def stop_db(self, update_db=False, do_not_start_on_reboot=False):
         LOG.info(_("Stopping MySQL."))
@@ -785,13 +782,13 @@ class BaseMySqlApp(object):
                                        shell=True)
         except KeyError:
             LOG.exception(_("Error stopping MySQL."))
-            raise RuntimeError(_("Service is not discovered."))
+            raise RuntimeError("Service is not discovered.")
         if not self.status.wait_for_real_status_to_change_to(
                 rd_instance.ServiceStatuses.SHUTDOWN,
                 self.state_change_wait_time, update_db):
             LOG.error(_("Could not stop MySQL."))
             self.status.end_restart()
-            raise RuntimeError(_("Could not stop MySQL!"))
+            raise RuntimeError("Could not stop MySQL!")
 
     def _remove_anonymous_user(self, client):
         LOG.debug("Removing anonymous user.")
@@ -861,7 +858,7 @@ class BaseMySqlApp(object):
                                         % (self.get_data_dir(), index),
                                         force=True, as_root=True)
             except exception.ProcessExecutionError:
-                LOG.exception(_("Could not delete logfile."))
+                LOG.exception("Could not delete logfile.")
                 raise
 
     def remove_overrides(self):
@@ -901,7 +898,6 @@ class BaseMySqlApp(object):
 
             t = text(str(g))
             client.execute(t)
-            client.execute(FLUSH)
 
     def get_port(self):
         with self.local_sql_client(self.get_engine()) as client:
@@ -980,7 +976,7 @@ class BaseMySqlApp(object):
             utils.execute_with_timeout(self.mysql_service['cmd_start'],
                                        shell=True, timeout=timeout)
         except KeyError:
-            raise RuntimeError(_("Service is not discovered."))
+            raise RuntimeError("Service is not discovered.")
         except exception.ProcessExecutionError:
             # it seems mysql (percona, at least) might come back with [Fail]
             # but actually come up ok. we're looking into the timing issue on
@@ -1000,7 +996,7 @@ class BaseMySqlApp(object):
                 LOG.exception(_("Error killing stalled MySQL start command."))
                 # There's nothing more we can do...
             self.status.end_restart()
-            raise RuntimeError(_("Could not start MySQL!"))
+            raise RuntimeError("Could not start MySQL!")
 
     def start_db_with_conf_changes(self, config_contents):
         LOG.info(_("Starting MySQL with conf changes."))
@@ -1009,7 +1005,7 @@ class BaseMySqlApp(object):
         if self.status.is_running:
             LOG.error(_("Cannot execute start_db_with_conf_changes because "
                         "MySQL state == %s.") % self.status)
-            raise RuntimeError(_("MySQL not stopped."))
+            raise RuntimeError("MySQL not stopped.")
         LOG.info(_("Resetting configuration."))
         self._reset_configuration(config_contents)
         self.start_mysql(True)
@@ -1056,8 +1052,9 @@ class BaseMySqlRootAccess(object):
         """Enable the root user global access and/or
            reset the root password.
         """
-        user = models.MySQLUser.root(password=root_password)
+        user = models.MySQLRootUser(root_password)
         with self.local_sql_client(self.mysql_app.get_engine()) as client:
+            print(client)
             try:
                 cu = sql_query.CreateUser(user.name, host=user.host)
                 t = text(str(cu))
@@ -1067,6 +1064,7 @@ class BaseMySqlRootAccess(object):
                 # TODO(rnirmal): More fine grained error checking later on
                 LOG.debug(err)
         with self.local_sql_client(self.mysql_app.get_engine()) as client:
+            print(client)
             uu = sql_query.SetPassword(user.name, host=user.host,
                                        new_password=user.password)
             t = text(str(uu))

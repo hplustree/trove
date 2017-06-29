@@ -15,8 +15,6 @@
 
 from proboscis import SkipTest
 
-from trove.tests.scenario import runners
-from trove.tests.scenario.runners.test_runners import SkipKnownBug
 from trove.tests.scenario.runners.test_runners import TestRunner
 
 
@@ -35,25 +33,22 @@ class InstanceForceDeleteRunner(TestRunner):
         name = self.instance_info.name + '_build'
         flavor = self.get_instance_flavor()
 
-        client = self.auth_client
-        inst = client.instances.create(
+        inst = self.auth_client.instances.create(
             name,
             self.get_flavor_href(flavor),
             self.instance_info.volume,
             nics=self.instance_info.nics,
             datastore=self.instance_info.dbaas_datastore,
             datastore_version=self.instance_info.dbaas_datastore_version)
-        self.assert_client_code(client, expected_http_code)
-        self.assert_instance_action([inst.id], expected_states)
+        self.assert_instance_action([inst.id], expected_states,
+                                    expected_http_code)
         self.build_inst_id = inst.id
 
     def run_delete_build_instance(self, expected_http_code=202):
         if self.build_inst_id:
-            client = self.admin_client
-            client.instances.force_delete(self.build_inst_id)
-            self.assert_client_code(client, expected_http_code)
+            self.auth_client.instances.force_delete(self.build_inst_id)
+            self.assert_client_code(expected_http_code)
 
     def run_wait_for_force_delete(self):
-        raise SkipKnownBug(runners.BUG_FORCE_DELETE_FAILS)
-        # if self.build_inst_id:
-        #     self.assert_all_gone([self.build_inst_id], ['SHUTDOWN'])
+        if self.build_inst_id:
+            self.assert_all_gone([self.build_inst_id], ['SHUTDOWN'])

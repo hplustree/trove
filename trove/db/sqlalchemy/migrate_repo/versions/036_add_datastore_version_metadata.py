@@ -21,6 +21,7 @@ from sqlalchemy.schema import UniqueConstraint
 from trove.db.sqlalchemy.migrate_repo.schema import Boolean
 from trove.db.sqlalchemy.migrate_repo.schema import create_tables
 from trove.db.sqlalchemy.migrate_repo.schema import DateTime
+from trove.db.sqlalchemy.migrate_repo.schema import drop_tables
 from trove.db.sqlalchemy.migrate_repo.schema import String
 from trove.db.sqlalchemy.migrate_repo.schema import Table
 
@@ -53,3 +54,8 @@ def upgrade(migrate_engine):
     # creates datastore_version_metadata table
     Table('datastore_versions', meta, autoload=True)
     create_tables([datastore_version_metadata])
+
+
+def downgrade(migrate_engine):
+    meta.bind = migrate_engine
+    drop_tables([datastore_version_metadata])

@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from novaclient import exceptions as nova_exceptions
 from oslo_log import log as logging
 
 from trove.cluster import models
@@ -19,6 +20,7 @@ from trove.cluster.tasks import ClusterTasks
 from trove.cluster.views import ClusterView
 from trove.common import cfg
 from trove.common import exception
+from trove.common import remote
 from trove.common import server_group as srv_grp
 from trove.common.strategies.cluster import base
 from trove.extensions.mgmt.clusters.views import MgmtClusterView
@@ -49,23 +51,38 @@ class RedisCluster(models.Cluster):
     @staticmethod
     def _create_instances(context, db_info, datastore, datastore_version,
                           instances, extended_properties, locality):
-        redis_conf = CONF.get(datastore_version.manager)
-        ephemeral_enabled = redis_conf.device_path
-        volume_enabled = redis_conf.volume_support
-
+        Redis_conf = CONF.get(datastore_version.manager)
         num_instances = len(instances)
+        total_volume_allocation = 0
 
-        models.validate_instance_flavors(
-            context, instances, volume_enabled, ephemeral_enabled)
+        # Validate and Cache flavors
+        nova_client = remote.create_nova_client(context)
+        unique_flavors = set(inst['flavor_id'] for inst in instances)
+        flavor_cache = {}
+        for fid in unique_flavors:
+            try:
+                flavor_cache.update({fid: nova_client.flavors.get(fid)})
+            except nova_exceptions.NotFound:
+                raise exception.FlavorNotFound(uuid=fid)
 
-        total_volume_allocation = models.get_required_volume_size(
-            instances, volume_enabled)
-
+        # Checking volumes
         name_index = 1
         for instance in instances:
             if not instance.get('name'):
                 instance['name'] = "%s-member-%s" % (db_info.name, name_index)
                 name_index += 1
+            volume_size = instance.get('volume_size')
+            if Redis_conf.volume_support:
+                models.validate_volume_size(volume_size)
+                total_volume_allocation += volume_size
+            else:
+                if volume_size:
+                    raise exception.VolumeNotSupported()
+                ephemeral_support = Redis_conf.device_path
+                flavor_id = instance['flavor_id']
+                flavor = flavor_cache[flavor_id]
+                if ephemeral_support and flavor.ephemeral == 0:
+                    raise exception.LocalStorageNotSpecified(flavor=flavor_id)
 
         # Check quotas
         quota_request = {'instances': num_instances,
@@ -88,20 +105,15 @@ class RedisCluster(models.Cluster):
                                             cluster_config={
                                                 "id": db_info.id,
                                                 "instance_type": "member"},
-                                            modules=instance.get('modules'),
                                             locality=locality,
-                                            region_name=instance.get(
-                                                'region_name')
+                                            modules=instance.get('modules')
                                             )
                 for instance in instances]
 
     @classmethod
     def create(cls, context, name, datastore, datastore_version,
-               instances, extended_properties, locality, configuration):
+               instances, extended_properties, locality):
         LOG.debug("Initiating cluster creation.")
-
-        if configuration:
-            raise exception.ConfigurationNotSupported()
 
         # Updating Cluster Task
 

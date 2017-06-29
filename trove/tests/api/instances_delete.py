@@ -50,8 +50,7 @@ class TestBase(object):
             volume = {'size': size}
         result = self.dbaas.instances.create(name,
                                              instance_info.dbaas_flavor_href,
-                                             volume, [], [],
-                                             nics=instance_info.nics)
+                                             volume, [], [])
         return result.id
 
     def wait_for_instance_status(self, instance_id, status="ACTIVE",

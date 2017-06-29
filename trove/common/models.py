@@ -18,7 +18,6 @@
 from oslo_utils.importutils import import_class
 
 from trove.common import cfg
-from trove.common.i18n import _
 from trove.common import remote
 
 CONF = cfg.CONF
@@ -92,7 +91,7 @@ class RemoteModelBase(ModelBase):
     # if the object is a list, it will turn it into a list of hash's again
     def data(self, **options):
         if self._data_object is None:
-            raise LookupError(_("data object is None"))
+            raise LookupError("data object is None")
         if isinstance(self._data_object, list):
             return [self._data_item(item) for item in self._data_object]
         else:
@@ -104,28 +103,21 @@ class NetworkRemoteModelBase(RemoteModelBase):
     network_driver = None
 
     @classmethod
-    def get_driver(cls, context, region_name):
+    def get_driver(cls, context):
         if not cls.network_driver:
             cls.network_driver = import_class(CONF.network_driver)
-        return cls.network_driver(context, region_name)
+        return cls.network_driver(context)
 
 
 class NovaRemoteModelBase(RemoteModelBase):
 
     @classmethod
-    def get_client(cls, context, region_name):
-        return remote.create_nova_client(context, region_name)
+    def get_client(cls, context):
+        return remote.create_nova_client(context)
 
 
 class SwiftRemoteModelBase(RemoteModelBase):
 
     @classmethod
-    def get_client(cls, context, region_name):
-        return remote.create_swift_client(context, region_name)
-
-
-class CinderRemoteModelBase(RemoteModelBase):
-
-    @classmethod
     def get_client(cls, context):
-        return remote.create_cinder_client(context)
+        return remote.create_swift_client(context)

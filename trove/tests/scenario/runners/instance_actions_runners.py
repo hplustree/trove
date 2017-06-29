@@ -16,7 +16,6 @@
 from proboscis import SkipTest
 
 from trove.tests.config import CONFIG
-from trove.tests.scenario.helpers.test_helper import DataType
 from trove.tests.scenario.runners.test_runners import TestRunner
 
 
@@ -37,18 +36,6 @@ class InstanceActionsRunner(TestRunner):
 
         return self.get_flavor(flavor_name)
 
-    def run_add_test_data(self):
-        host = self.get_instance_host(self.instance_info.id)
-        self.test_helper.add_data(DataType.small, host)
-
-    def run_verify_test_data(self):
-        host = self.get_instance_host(self.instance_info.id)
-        self.test_helper.verify_data(DataType.small, host)
-
-    def run_remove_test_data(self):
-        host = self.get_instance_host(self.instance_info.id)
-        self.test_helper.remove_data(DataType.small, host)
-
     def run_instance_restart(
             self, expected_states=['REBOOT', 'ACTIVE'],
             expected_http_code=202):
@@ -59,10 +46,9 @@ class InstanceActionsRunner(TestRunner):
                                 expected_http_code):
         self.report.log("Testing restart on instance: %s" % instance_id)
 
-        client = self.auth_client
-        client.instances.restart(instance_id)
-        self.assert_client_code(client, expected_http_code)
-        self.assert_instance_action(instance_id, expected_states)
+        self.auth_client.instances.restart(instance_id)
+        self.assert_instance_action(instance_id, expected_states,
+                                    expected_http_code)
 
     def run_instance_resize_volume(
             self, resize_amount=1,
@@ -84,10 +70,9 @@ class InstanceActionsRunner(TestRunner):
         old_volume_size = int(instance.volume['size'])
         new_volume_size = old_volume_size + resize_amount
 
-        client = self.auth_client
-        client.instances.resize_volume(instance_id, new_volume_size)
-        self.assert_client_code(client, expected_http_code)
-        self.assert_instance_action(instance_id, expected_states)
+        self.auth_client.instances.resize_volume(instance_id, new_volume_size)
+        self.assert_instance_action(instance_id, expected_states,
+                                    expected_http_code)
 
         instance = self.get_instance(instance_id)
         self.assert_equal(new_volume_size, instance.volume['size'],
@@ -101,9 +86,9 @@ class InstanceActionsRunner(TestRunner):
                                       expected_http_code):
         self.report.log("Testing resize to '%s' on instance: %s" %
                         (resize_flavor_id, instance_id))
-        client = self.auth_client
-        client.instances.resize_instance(instance_id, resize_flavor_id)
-        self.assert_client_code(client, expected_http_code)
+        self.auth_client.instances.resize_instance(
+            instance_id, resize_flavor_id)
+        self.assert_client_code(expected_http_code, client=self.auth_client)
 
     def run_wait_for_instance_resize_flavor(
             self, expected_states=['RESIZE', 'ACTIVE']):

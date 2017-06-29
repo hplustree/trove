@@ -22,6 +22,7 @@ from sqlalchemy.schema import UniqueConstraint
 from trove.db.sqlalchemy.migrate_repo.schema import Boolean
 from trove.db.sqlalchemy.migrate_repo.schema import create_tables
 from trove.db.sqlalchemy.migrate_repo.schema import DateTime
+from trove.db.sqlalchemy.migrate_repo.schema import drop_tables
 from trove.db.sqlalchemy.migrate_repo.schema import String
 from trove.db.sqlalchemy.migrate_repo.schema import Table
 from trove.db.sqlalchemy.migrate_repo.schema import Text
@@ -76,3 +77,8 @@ def upgrade(migrate_engine):
     meta.bind = migrate_engine
     Table('instances', meta, autoload=True)
     create_tables([modules, instance_modules])
+
+
+def downgrade(migrate_engine):
+    meta.bind = migrate_engine
+    drop_tables([instance_modules, modules])

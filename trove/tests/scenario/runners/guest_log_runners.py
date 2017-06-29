@@ -22,8 +22,6 @@ from trove.guestagent.common import operating_system
 from trove.guestagent import guest_log
 from trove.tests.config import CONFIG
 from trove.tests.scenario.helpers.test_helper import DataType
-from trove.tests.scenario import runners
-from trove.tests.scenario.runners.test_runners import SkipKnownBug
 from trove.tests.scenario.runners.test_runners import TestRunner
 
 
@@ -73,7 +71,6 @@ class GuestLogRunner(TestRunner):
         log_list = list(client.instances.log_list(self.instance_info.id))
         log_names = list(ll.name for ll in log_list)
         self.assert_list_elements_equal(expected_list, log_names)
-        self.register_debug_inst_ids(self.instance_info.id)
 
     def run_test_admin_log_list(self):
         self.assert_log_list(self.admin_client,
@@ -81,9 +78,8 @@ class GuestLogRunner(TestRunner):
 
     def run_test_log_show(self):
         log_pending = self._set_zero_or_none()
-        log_name = self._get_exposed_user_log_name()
         self.assert_log_show(self.auth_client,
-                             log_name,
+                             self._get_exposed_user_log_name(),
                              expected_published=0,
                              expected_pending=log_pending)
 
@@ -105,7 +101,7 @@ class GuestLogRunner(TestRunner):
         self.report.log("Executing log_show for log '%s'" % log_name)
         log_details = client.instances.log_show(
             self.instance_info.id, log_name)
-        self.assert_client_code(client, expected_http_code)
+        self.assert_client_code(expected_http_code, client=client)
         self.assert_log_details(
             log_details, log_name,
             expected_type=expected_type,
@@ -133,11 +129,8 @@ class GuestLogRunner(TestRunner):
         self.assert_equal(expected_type, log_details.type,
                           "Wrong log type for '%s' log" % expected_log_name)
         current_status = log_details.status.replace(' ', '_')
-        if not isinstance(expected_status, list):
-            expected_status = [expected_status]
-        self.assert_is_sublist([current_status], expected_status,
-                               "Wrong log status for '%s' log" %
-                               expected_log_name)
+        self.assert_equal(expected_status, current_status,
+                          "Wrong log status for '%s' log" % expected_log_name)
         if expected_published is None:
             pass
         elif expected_published == 0:
@@ -191,7 +184,7 @@ class GuestLogRunner(TestRunner):
         self.report.log("Executing log_enable for log '%s'" % log_name)
         log_details = client.instances.log_enable(
             self.instance_info.id, log_name)
-        self.assert_client_code(client, expected_http_code)
+        self.assert_client_code(expected_http_code, client=client)
         self.assert_log_details(
             log_details, log_name,
             expected_type=expected_type,
@@ -208,7 +201,7 @@ class GuestLogRunner(TestRunner):
                         (log_name, discard))
         log_details = client.instances.log_disable(
             self.instance_info.id, log_name, discard=discard)
-        self.assert_client_code(client, expected_http_code)
+        self.assert_client_code(expected_http_code, client=client)
         self.assert_log_details(
             log_details, log_name,
             expected_type=expected_type,
@@ -226,7 +219,7 @@ class GuestLogRunner(TestRunner):
                         (log_name, disable, discard))
         log_details = client.instances.log_publish(
             self.instance_info.id, log_name, disable=disable, discard=discard)
-        self.assert_client_code(client, expected_http_code)
+        self.assert_client_code(expected_http_code, client=client)
         self.assert_log_details(
             log_details, log_name,
             expected_type=expected_type,
@@ -242,7 +235,7 @@ class GuestLogRunner(TestRunner):
         self.report.log("Executing log_discard for log '%s'" % log_name)
         log_details = client.instances.log_discard(
             self.instance_info.id, log_name)
-        self.assert_client_code(client, expected_http_code)
+        self.assert_client_code(expected_http_code, client=client)
         self.assert_log_details(
             log_details, log_name,
             expected_type=expected_type,
@@ -298,146 +291,140 @@ class GuestLogRunner(TestRunner):
     def run_test_log_enable_sys(self,
                                 expected_exception=exceptions.BadRequest,
                                 expected_http_code=400):
-        log_name = self._get_unexposed_sys_log_name()
         self.assert_log_enable_fails(
             self.admin_client,
             expected_exception, expected_http_code,
-            log_name)
+            self._get_unexposed_sys_log_name())
 
     def assert_log_enable_fails(self, client,
                                 expected_exception, expected_http_code,
                                 log_name):
-        self.assert_raises(expected_exception, expected_http_code,
-                           client, client.instances.log_enable,
+        self.assert_raises(expected_exception, None,
+                           client.instances.log_enable,
                            self.instance_info.id, log_name)
+        # we may not be using the main client, so check explicitly here
+        self.assert_client_code(expected_http_code, client=client)
 
     def run_test_log_disable_sys(self,
                                  expected_exception=exceptions.BadRequest,
                                  expected_http_code=400):
-        log_name = self._get_unexposed_sys_log_name()
         self.assert_log_disable_fails(
             self.admin_client,
             expected_exception, expected_http_code,
-            log_name)
+            self._get_unexposed_sys_log_name())
 
     def assert_log_disable_fails(self, client,
                                  expected_exception, expected_http_code,
                                  log_name, discard=None):
-        self.assert_raises(expected_exception, expected_http_code,
-                           client, client.instances.log_disable,
+        self.assert_raises(expected_exception, None,
+                           client.instances.log_disable,
                            self.instance_info.id, log_name,
                            discard=discard)
+        # we may not be using the main client, so check explicitly here
+        self.assert_client_code(expected_http_code, client=client)
 
     def run_test_log_show_unauth_user(self,
                                       expected_exception=exceptions.NotFound,
                                       expected_http_code=404):
-        log_name = self._get_exposed_user_log_name()
         self.assert_log_show_fails(
             self.unauth_client,
             expected_exception, expected_http_code,
-            log_name)
+            self._get_exposed_user_log_name())
 
     def assert_log_show_fails(self, client,
                               expected_exception, expected_http_code,
                               log_name):
-        self.assert_raises(expected_exception, expected_http_code,
-                           client, client.instances.log_show,
+        self.assert_raises(expected_exception, None,
+                           client.instances.log_show,
                            self.instance_info.id, log_name)
+        # we may not be using the main client, so check explicitly here
+        self.assert_client_code(expected_http_code, client=client)
 
     def run_test_log_list_unauth_user(self,
                                       expected_exception=exceptions.NotFound,
                                       expected_http_code=404):
-        client = self.unauth_client
-        self.assert_raises(expected_exception, expected_http_code,
-                           client, client.instances.log_list,
+        self.assert_raises(expected_exception, None,
+                           self.unauth_client.instances.log_list,
                            self.instance_info.id)
+        # we're not using the main client, so check explicitly here
+        self.assert_client_code(expected_http_code, client=self.unauth_client)
 
-    def run_test_log_generator_unauth_user(
-            self, expected_exception=exceptions.NotFound,
-            expected_http_code=404):
-        log_name = self._get_exposed_user_log_name()
+    def run_test_log_generator_unauth_user(self):
         self.assert_log_generator_unauth_user(
-            self.unauth_client, log_name,
-            expected_exception, expected_http_code)
+            self.unauth_client, self._get_exposed_user_log_name())
 
-    def assert_log_generator_unauth_user(self, client, log_name,
-                                         expected_exception,
-                                         expected_http_code,
-                                         publish=None):
-        raise SkipKnownBug(runners.BUG_UNAUTH_TEST_WRONG)
-        # self.assert_raises(expected_exception, expected_http_code,
-        #                    client, client.instances.log_generator,
-        #                    self.instance_info.id, log_name, publish=publish)
+    def assert_log_generator_unauth_user(self, client, log_name, publish=None):
+        try:
+            client.instances.log_generator(
+                self.instance_info.id, log_name, publish=publish)
+            raise("Client allowed unauthorized access to log_generator")
+        except Exception:
+            pass
 
-    def run_test_log_generator_publish_unauth_user(
-            self, expected_exception=exceptions.NotFound,
-            expected_http_code=404):
-        log_name = self._get_exposed_user_log_name()
+    def run_test_log_generator_publish_unauth_user(self):
         self.assert_log_generator_unauth_user(
-            self.unauth_client, log_name,
-            expected_exception, expected_http_code,
+            self.unauth_client, self._get_exposed_user_log_name(),
             publish=True)
 
     def run_test_log_show_unexposed_user(
             self, expected_exception=exceptions.BadRequest,
             expected_http_code=400):
-        log_name = self._get_unexposed_sys_log_name()
         self.assert_log_show_fails(
             self.auth_client,
             expected_exception, expected_http_code,
-            log_name)
+            self._get_unexposed_sys_log_name())
 
     def run_test_log_enable_unexposed_user(
             self, expected_exception=exceptions.BadRequest,
             expected_http_code=400):
-        log_name = self._get_unexposed_sys_log_name()
         self.assert_log_enable_fails(
             self.auth_client,
             expected_exception, expected_http_code,
-            log_name)
+            self._get_unexposed_sys_log_name())
 
     def run_test_log_disable_unexposed_user(
             self, expected_exception=exceptions.BadRequest,
             expected_http_code=400):
-        log_name = self._get_unexposed_sys_log_name()
         self.assert_log_disable_fails(
             self.auth_client,
             expected_exception, expected_http_code,
-            log_name)
+            self._get_unexposed_sys_log_name())
 
     def run_test_log_publish_unexposed_user(
             self, expected_exception=exceptions.BadRequest,
             expected_http_code=400):
-        log_name = self._get_unexposed_sys_log_name()
         self.assert_log_publish_fails(
             self.auth_client,
             expected_exception, expected_http_code,
-            log_name)
+            self._get_unexposed_sys_log_name())
 
     def assert_log_publish_fails(self, client,
                                  expected_exception, expected_http_code,
                                  log_name,
                                  disable=None, discard=None):
-        self.assert_raises(expected_exception, expected_http_code,
-                           client, client.instances.log_publish,
+        self.assert_raises(expected_exception, None,
+                           client.instances.log_publish,
                            self.instance_info.id, log_name,
                            disable=disable, discard=discard)
+        # we may not be using the main client, so check explicitly here
+        self.assert_client_code(expected_http_code, client=client)
 
     def run_test_log_discard_unexposed_user(
             self, expected_exception=exceptions.BadRequest,
             expected_http_code=400):
-        log_name = self._get_unexposed_sys_log_name()
         self.assert_log_discard_fails(
             self.auth_client,
             expected_exception, expected_http_code,
-            log_name)
+            self._get_unexposed_sys_log_name())
 
     def assert_log_discard_fails(self, client,
                                  expected_exception, expected_http_code,
                                  log_name):
-        self.assert_raises(expected_exception, expected_http_code,
-                           client, client.instances.log_discard,
+        self.assert_raises(expected_exception, None,
+                           client.instances.log_discard,
                            self.instance_info.id, log_name)
+        # we may not be using the main client, so check explicitly here
+        self.assert_client_code(expected_http_code, client=client)
 
     def run_test_log_enable_user(self):
         expected_status = guest_log.LogStatus.Ready.name
@@ -480,23 +467,23 @@ class GuestLogRunner(TestRunner):
             # we need to wait until the heartbeat flips the instance
             # back into 'ACTIVE' before we issue the restart command
             expected_states = ['RESTART_REQUIRED', 'ACTIVE']
-            self.assert_instance_action(instance_id, expected_states)
-            client = self.auth_client
-            client.instances.restart(instance_id)
-            self.assert_client_code(client, expected_http_code)
+            self.assert_instance_action(instance_id, expected_states, None)
+            self.auth_client.instances.restart(instance_id)
+            self.assert_client_code(expected_http_code,
+                                    client=self.auth_client)
 
     def run_test_wait_for_restart(self, expected_states=['REBOOT', 'ACTIVE']):
         if self.test_helper.log_enable_requires_restart():
-            self.assert_instance_action(self.instance_info.id, expected_states)
+            self.assert_instance_action(self.instance_info.id,
+                                        expected_states, None)
 
     def run_test_log_publish_user(self):
         for log_name in self._get_exposed_user_log_names():
             self.assert_log_publish(
                 self.auth_client,
                 log_name,
-                expected_status=[guest_log.LogStatus.Published.name,
-                                 guest_log.LogStatus.Partial.name],
-                expected_published=1, expected_pending=None)
+                expected_status=guest_log.LogStatus.Published.name,
+                expected_published=1, expected_pending=0)
 
     def run_test_add_data(self):
         self.test_helper.add_data(DataType.micro, self.get_instance_host())
@@ -509,10 +496,9 @@ class GuestLogRunner(TestRunner):
             self.assert_log_publish(
                 self.admin_client,
                 log_name,
-                expected_status=[guest_log.LogStatus.Published.name,
-                                 guest_log.LogStatus.Partial.name],
+                expected_status=guest_log.LogStatus.Published.name,
                 expected_published=self._get_last_log_published(log_name),
-                expected_pending=None)
+                expected_pending=0)
 
     def run_test_log_generator_user(self):
         for log_name in self._get_exposed_user_log_names():
@@ -570,10 +556,9 @@ class GuestLogRunner(TestRunner):
         self.assert_log_publish(
             self.auth_client,
             log_name,
-            expected_status=[guest_log.LogStatus.Published.name,
-                             guest_log.LogStatus.Partial.name],
+            expected_status=guest_log.LogStatus.Published.name,
             expected_published=self._get_last_log_published(log_name),
-            expected_pending=None)
+            expected_pending=0)
         # Now get the full contents of the log
         self.assert_log_generator(self.auth_client, log_name, lines=100000)
         log_lines = len(self._get_last_log_contents(log_name).splitlines())
@@ -628,9 +613,8 @@ class GuestLogRunner(TestRunner):
                 expected_published=0, expected_pending=1)
 
     def run_test_log_show_after_stop_details(self):
-        log_name = self._get_exposed_user_log_name()
         self.stopped_log_details = self.auth_client.instances.log_show(
-            self.instance_info.id, log_name)
+            self.instance_info.id, self._get_exposed_user_log_name())
         self.assert_is_not_none(self.stopped_log_details)
 
     def run_test_add_data_again_after_stop(self):
@@ -641,9 +625,8 @@ class GuestLogRunner(TestRunner):
         self.test_helper.verify_data(DataType.micro3, self.get_instance_host())
 
     def run_test_log_show_after_stop(self):
-        log_name = self._get_exposed_user_log_name()
         self.assert_log_show(
-            self.auth_client, log_name,
+            self.auth_client, self._get_exposed_user_log_name(),
             expected_published=self.stopped_log_details.published,
             expected_pending=self.stopped_log_details.pending)
 
@@ -653,10 +636,9 @@ class GuestLogRunner(TestRunner):
         if self.test_helper.log_enable_requires_restart():
             expected_status = guest_log.LogStatus.Restart_Required.name
 
-        log_name = self._get_exposed_user_log_name()
         self.assert_log_enable(
             self.auth_client,
-            log_name,
+            self._get_exposed_user_log_name(),
             expected_status=expected_status,
             expected_published=0, expected_pending=expected_pending)
 
@@ -672,30 +654,26 @@ class GuestLogRunner(TestRunner):
         self.assert_log_publish(
             self.auth_client,
             log_name,
-            expected_status=[guest_log.LogStatus.Published.name,
-                             guest_log.LogStatus.Partial.name],
+            expected_status=guest_log.LogStatus.Published.name,
             expected_published=self._get_last_log_published(log_name) + 1,
-            expected_pending=None)
+            expected_pending=0)
 
     def run_test_log_disable_user_after_stop_start(self):
         expected_status = guest_log.LogStatus.Disabled.name
         if self.test_helper.log_enable_requires_restart():
             expected_status = guest_log.LogStatus.Restart_Required.name
-        log_name = self._get_exposed_user_log_name()
         self.assert_log_disable(
             self.auth_client,
-            log_name, discard=True,
+            self._get_exposed_user_log_name(), discard=True,
             expected_status=expected_status,
             expected_published=0, expected_pending=1)
 
     def run_test_log_show_sys(self):
-        log_name = self._get_unexposed_sys_log_name()
         self.assert_log_show(
             self.admin_client,
-            log_name,
+            self._get_unexposed_sys_log_name(),
             expected_type=guest_log.LogType.SYS.name,
-            expected_status=[guest_log.LogStatus.Ready.name,
-                             guest_log.LogStatus.Partial.name],
+            expected_status=guest_log.LogStatus.Ready.name,
             expected_published=0, expected_pending=1)
 
     def run_test_log_publish_sys(self):
@@ -718,45 +696,39 @@ class GuestLogRunner(TestRunner):
             expected_pending=1)
 
     def run_test_log_generator_sys(self):
-        log_name = self._get_unexposed_sys_log_name()
         self.assert_log_generator(
             self.admin_client,
-            log_name,
+            self._get_unexposed_sys_log_name(),
             lines=4, expected_lines=4)
 
     def run_test_log_generator_publish_sys(self):
-        log_name = self._get_unexposed_sys_log_name()
         self.assert_log_generator(
             self.admin_client,
-            log_name, publish=True,
+            self._get_unexposed_sys_log_name(), publish=True,
             lines=4, expected_lines=4)
 
     def run_test_log_generator_swift_client_sys(self):
-        log_name = self._get_unexposed_sys_log_name()
         self.assert_log_generator(
             self.admin_client,
-            log_name, publish=True,
+            self._get_unexposed_sys_log_name(), publish=True,
             lines=4, expected_lines=4,
             swift_client=self.swift_client)
 
     def run_test_log_save_sys(self):
-        log_name = self._get_unexposed_sys_log_name()
         self.assert_test_log_save(
             self.admin_client,
-            log_name)
+            self._get_unexposed_sys_log_name())
 
     def run_test_log_save_publish_sys(self):
-        log_name = self._get_unexposed_sys_log_name()
         self.assert_test_log_save(
             self.admin_client,
-            log_name,
+            self._get_unexposed_sys_log_name(),
             publish=True)
 
     def run_test_log_discard_sys(self):
-        log_name = self._get_unexposed_sys_log_name()
         self.assert_log_discard(
             self.admin_client,
-            log_name,
+            self._get_unexposed_sys_log_name(),
             expected_type=guest_log.LogType.SYS.name,
             expected_status=guest_log.LogStatus.Ready.name,
             expected_published=0, expected_pending=1)
@@ -765,8 +737,7 @@ class GuestLogRunner(TestRunner):
 class CassandraGuestLogRunner(GuestLogRunner):
 
     def run_test_log_show(self):
-        log_name = self._get_exposed_user_log_name()
         self.assert_log_show(self.auth_client,
-                             log_name,
+                             self._get_exposed_user_log_name(),
                              expected_published=0,
                              expected_pending=None)

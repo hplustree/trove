@@ -229,12 +229,12 @@ class UserActionsInstCreateWaitGroup(TestGroup):
 
     @test
     def wait_for_instances(self):
-        """Waiting for user instance to become active."""
-        self.instance_create_runner.run_wait_for_init_instance()
+        """Waiting for all instances to become active."""
+        self.instance_create_runner.run_wait_for_created_instances()
 
     @test(depends_on=[wait_for_instances])
     def validate_initialized_instance(self):
-        """Validate the user instance data and properties."""
+        """Validate the initialized instance data and properties."""
         self.instance_create_runner.run_validate_initialized_instance()
 
 
@@ -250,7 +250,7 @@ class UserActionsInstDeleteGroup(TestGroup):
 
     @test
     def delete_initialized_instance(self):
-        """Delete the user instance."""
+        """Delete the initialized instance."""
         self.instance_create_runner.run_initialized_instance_delete()
 
 
@@ -268,5 +268,5 @@ class UserActionsInstDeleteWaitGroup(TestGroup):
 
     @test
     def wait_for_delete_initialized_instance(self):
-        """Wait for the user instance to delete."""
+        """Wait for the initialized instance to delete."""
         self.instance_create_runner.run_wait_for_init_delete()

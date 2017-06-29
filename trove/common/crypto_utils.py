@@ -20,9 +20,7 @@ from Crypto.Cipher import AES
 from Crypto import Random
 import hashlib
 from oslo_utils import encodeutils
-import random
 import six
-import string
 
 from trove.common import stream_codecs
 
@@ -70,9 +68,3 @@ def decrypt_data(data, key, iv_bit_count=IV_BIT_COUNT):
     aes = AES.new(md5_key, AES.MODE_CBC, bytes(iv))
     decrypted = aes.decrypt(bytes(data[iv_bit_count:]))
     return unpad_after_decryption(decrypted)
-
-
-def generate_random_key(length=32, chars=None):
-    chars = chars if chars else (string.ascii_uppercase +
-                                 string.ascii_lowercase + string.digits)
-    return ''.join(random.choice(chars) for _ in range(length))

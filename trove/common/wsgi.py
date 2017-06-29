@@ -322,8 +322,6 @@ class Controller(object):
             exception.BackupTooLarge,
             exception.ModuleAccessForbidden,
             exception.ModuleAppliedToInstance,
-            exception.PolicyNotAuthorized,
-            exception.LogAccessForbidden,
         ],
         webob.exc.HTTPBadRequest: [
             exception.InvalidModelError,
@@ -550,8 +548,7 @@ class ContextMiddleware(base_wsgi.Middleware):
                                           is_admin=is_admin,
                                           limit=limits.get('limit'),
                                           marker=limits.get('marker'),
-                                          service_catalog=service_catalog,
-                                          roles=roles)
+                                          service_catalog=service_catalog)
         request.environ[CONTEXT_KEY] = context
 
     @classmethod

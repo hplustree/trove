@@ -21,8 +21,6 @@ import hashlib
 import six
 from sqlalchemy.sql.expression import or_
 
-from oslo_log import log as logging
-
 from trove.common import cfg
 from trove.common import crypto_utils
 from trove.common import exception
@@ -30,7 +28,8 @@ from trove.common.i18n import _
 from trove.common import utils
 from trove.datastore import models as datastore_models
 from trove.db import models
-from trove.taskmanager import api as task_api
+
+from oslo_log import log as logging
 
 
 CONF = cfg.CONF
@@ -47,9 +46,9 @@ class Modules(object):
     @staticmethod
     def load(context, datastore=None):
         if context is None:
-            raise TypeError(_("Argument context not defined."))
+            raise TypeError("Argument context not defined.")
         elif id is None:
-            raise TypeError(_("Argument is not defined."))
+            raise TypeError("Argument is not defined.")
 
         query_opts = {'deleted': False}
         if datastore:
@@ -76,9 +75,9 @@ class Modules(object):
     def load_auto_apply(context, datastore_id, datastore_version_id):
         """Return all the auto-apply modules for the given criteria."""
         if context is None:
-            raise TypeError(_("Argument context not defined."))
+            raise TypeError("Argument context not defined.")
         elif id is None:
-            raise TypeError(_("Argument is not defined."))
+            raise TypeError("Argument is not defined.")
 
         query_opts = {'deleted': False,
                       'auto_apply': True}
@@ -114,9 +113,9 @@ class Modules(object):
         for other tenants, unless the user is admin.
         """
         if context is None:
-            raise TypeError(_("Argument context not defined."))
+            raise TypeError("Argument context not defined.")
         elif id is None:
-            raise TypeError(_("Argument is not defined."))
+            raise TypeError("Argument is not defined.")
 
         modules = []
         if module_ids:
@@ -128,26 +127,6 @@ class Modules(object):
             modules = db_info.all()
         return modules
 
-    @staticmethod
-    def validate(modules, datastore_id, datastore_version_id):
-        for module in modules:
-            if (module.datastore_id and
-                    module.datastore_id != datastore_id):
-                reason = (_("Module '%(mod)s' cannot be applied "
-                            " (Wrong datastore '%(ds)s' - expected '%(ds2)s')")
-                          % {'mod': module.name, 'ds': module.datastore_id,
-                             'ds2': datastore_id})
-                raise exception.ModuleInvalid(reason=reason)
-            if (module.datastore_version_id and
-                    module.datastore_version_id != datastore_version_id):
-                reason = (_("Module '%(mod)s' cannot be applied "
-                            " (Wrong datastore version '%(ver)s' "
-                            "- expected '%(ver2)s')")
-                          % {'mod': module.name,
-                             'ver': module.datastore_version_id,
-                             'ver2': datastore_version_id})
-                raise exception.ModuleInvalid(reason=reason)
-
 
 class Module(object):
 
@@ -158,17 +137,14 @@ class Module(object):
     @staticmethod
     def create(context, name, module_type, contents,
                description, tenant_id, datastore,
-               datastore_version, auto_apply, visible, live_update,
-               priority_apply, apply_order, full_access):
+               datastore_version, auto_apply, visible, live_update):
         if module_type.lower() not in Modules.VALID_MODULE_TYPES:
             LOG.error(_("Valid module types: %s") % Modules.VALID_MODULE_TYPES)
             raise exception.ModuleTypeNotFound(module_type=module_type)
         Module.validate_action(
-            context, 'create', tenant_id, auto_apply, visible, priority_apply,
-            full_access)
-        datastore_id, datastore_version_id = (
-            datastore_models.get_datastore_or_version(
-                datastore, datastore_version))
+            context, 'create', tenant_id, auto_apply, visible)
+        datastore_id, datastore_version_id = Module.validate_datastore(
+            datastore, datastore_version)
         if Module.key_exists(
                 name, module_type, tenant_id,
                 datastore_id, datastore_version_id):
@@ -177,9 +153,6 @@ class Module(object):
             raise exception.ModuleAlreadyExists(
                 name=name, datastore=datastore_str, ds_version=ds_version_str)
         md5, processed_contents = Module.process_contents(contents)
-        is_admin = context.is_admin
-        if full_access:
-            is_admin = 0
         module = DBModule.create(
             name=name,
             type=module_type.lower(),
@@ -191,39 +164,41 @@ class Module(object):
             auto_apply=auto_apply,
             visible=visible,
             live_update=live_update,
-            priority_apply=priority_apply,
-            apply_order=apply_order,
-            is_admin=is_admin,
             md5=md5)
         return module
 
     # Certain fields require admin access to create/change/delete
     @staticmethod
-    def validate_action(context, action_str, tenant_id, auto_apply, visible,
-                        priority_apply, full_access):
-        admin_options_str = None
-        option_strs = []
-        if tenant_id is None:
-            option_strs.append(_("Tenant: %s") % Modules.MATCH_ALL_NAME)
-        if auto_apply:
-            option_strs.append(_("Auto: %s") % auto_apply)
-        if not visible:
-            option_strs.append(_("Visible: %s") % visible)
-        if priority_apply:
-            option_strs.append(_("Priority: %s") % priority_apply)
-        if full_access is not None:
-            if full_access and option_strs:
-                admin_options_str = "(" + ", ".join(option_strs) + ")"
-                raise exception.InvalidModelError(
-                    errors=_('Cannot make module full access: %s') %
-                    admin_options_str)
-            option_strs.append(_("Full Access: %s") % full_access)
-        if option_strs:
-            admin_options_str = "(" + ", ".join(option_strs) + ")"
-        if not context.is_admin and admin_options_str:
+    def validate_action(context, action_str, tenant_id, auto_apply, visible):
+        error_str = None
+        if not context.is_admin:
+            option_strs = []
+            if tenant_id is None:
+                option_strs.append(_("Tenant: %s") % Modules.MATCH_ALL_NAME)
+            if auto_apply:
+                option_strs.append(_("Auto: %s") % auto_apply)
+            if not visible:
+                option_strs.append(_("Visible: %s") % visible)
+            if option_strs:
+                error_str = "(" + " ".join(option_strs) + ")"
+        if error_str:
             raise exception.ModuleAccessForbidden(
-                action=action_str, options=admin_options_str)
-        return admin_options_str
+                action=action_str, options=error_str)
+
+    @staticmethod
+    def validate_datastore(datastore, datastore_version):
+        datastore_id = None
+        datastore_version_id = None
+        if datastore:
+            ds, ds_ver = datastore_models.get_datastore_version(
+                type=datastore, version=datastore_version)
+            datastore_id = ds.id
+            if datastore_version:
+                datastore_version_id = ds_ver.id
+        elif datastore_version:
+            msg = _("Cannot specify version without datastore")
+            raise exception.BadRequest(message=msg)
+        return datastore_id, datastore_version_id
 
     @staticmethod
     def key_exists(name, module_type, tenant_id, datastore_id,
@@ -262,8 +237,7 @@ class Module(object):
     def delete(context, module):
         Module.validate_action(
             context, 'delete',
-            module.tenant_id, module.auto_apply, module.visible,
-            module.priority_apply, None)
+            module.tenant_id, module.auto_apply, module.visible)
         Module.enforce_live_update(module.id, module.live_update, module.md5)
         module.deleted = True
         module.deleted_at = datetime.utcnow()
@@ -308,33 +282,28 @@ class Module(object):
         return module
 
     @staticmethod
-    def update(context, module, original_module, full_access):
+    def update(context, module, original_module):
         Module.enforce_live_update(
             original_module.id, original_module.live_update,
             original_module.md5)
-        # we don't allow any changes to 'is_admin' modules by non-admin
-        if original_module.is_admin and not context.is_admin:
-            raise exception.ModuleAccessForbidden(
-                action='update', options='(Module is an admin module)')
-        # we don't allow any changes to admin-only attributes by non-admin
-        admin_options = Module.validate_action(
-            context, 'update', module.tenant_id, module.auto_apply,
-            module.visible, module.priority_apply, full_access)
-        # make sure we set the is_admin flag, but only if it was
-        # originally is_admin or we changed an admin option
-        module.is_admin = original_module.is_admin or (
-            1 if admin_options else 0)
-        # but we turn it on/off if full_access is specified
-        if full_access is not None:
-            module.is_admin = 0 if full_access else 1
-        ds_id, ds_ver_id = datastore_models.get_datastore_or_version(
+        # we don't allow any changes to 'admin'-type modules, even if
+        # the values changed aren't the admin ones.
+        access_tenant_id = (None if (original_module.tenant_id is None or
+                                     module.tenant_id is None)
+                            else module.tenant_id)
+        access_auto_apply = original_module.auto_apply or module.auto_apply
+        access_visible = original_module.visible and module.visible
+        Module.validate_action(
+            context, 'update',
+            access_tenant_id, access_auto_apply, access_visible)
+        ds_id, ds_ver_id = Module.validate_datastore(
             module.datastore_id, module.datastore_version_id)
         if module.contents != original_module.contents:
             md5, processed_contents = Module.process_contents(module.contents)
             module.md5 = md5
             module.contents = processed_contents
-        elif hasattr(original_module, 'encrypted_contents'):
-            # on load the contents may have been decrypted, so
+        else:
+            # on load the contents were decrypted, so
             # we need to put the encrypted contents back before we update
             module.contents = original_module.encrypted_contents
         if module.datastore_id:
@@ -345,19 +314,19 @@ class Module(object):
         module.updated = datetime.utcnow()
         DBModule.save(module)
 
-    @staticmethod
-    def reapply(context, id, md5, include_clustered,
-                batch_size, batch_delay, force):
-        task_api.API(context).reapply_module(
-            id, md5, include_clustered, batch_size, batch_delay, force)
-
 
 class InstanceModules(object):
 
     @staticmethod
     def load(context, instance_id=None, module_id=None, md5=None):
-        db_info = InstanceModules.load_all(
-            context, instance_id=instance_id, module_id=module_id, md5=md5)
+        selection = {'deleted': False}
+        if instance_id:
+            selection['instance_id'] = instance_id
+        if module_id:
+            selection['module_id'] = module_id
+        if md5:
+            selection['md5'] = md5
+        db_info = DBInstanceModule.find_all(**selection)
         if db_info.count() == 0:
             LOG.debug("No instance module records found")
 
@@ -367,17 +336,6 @@ class InstanceModules(object):
             'modules', db_info, 'foo', limit=limit, marker=context.marker)
         next_marker = data_view.next_page_marker
         return data_view.collection, next_marker
-
-    @staticmethod
-    def load_all(context, instance_id=None, module_id=None, md5=None):
-        query_opts = {'deleted': False}
-        if instance_id:
-            query_opts['instance_id'] = instance_id
-        if module_id:
-            query_opts['module_id'] = module_id
-        if md5:
-            query_opts['md5'] = md5
-        return DBInstanceModule.find_all(**query_opts)
 
 
 class InstanceModule(object):
@@ -389,33 +347,10 @@ class InstanceModule(object):
 
     @staticmethod
     def create(context, instance_id, module_id, md5):
-        instance_module = None
-        # First mark any 'old' records as deleted and/or update the
-        # current one.
-        old_ims = InstanceModules.load_all(
-            context, instance_id=instance_id, module_id=module_id)
-        for old_im in old_ims:
-            if old_im.md5 == md5 and not instance_module:
-                instance_module = old_im
-                InstanceModule.update(context, instance_module)
-            else:
-                if old_im.md5 == md5 and instance_module:
-                    LOG.debug("Found dupe IM record %s; marking as deleted "
-                              "(instance %s, module %s)." %
-                              (old_im.id, instance_id, module_id))
-                else:
-                    LOG.debug("Deleting IM record %s (instance %s, "
-                              "module %s)." %
-                              (old_im.id, instance_id, module_id))
-                InstanceModule.delete(context, old_im)
-
-        # If we don't have an instance module, it means we need to create
-        # a new one.
-        if not instance_module:
-            instance_module = DBInstanceModule.create(
-                instance_id=instance_id,
-                module_id=module_id,
-                md5=md5)
+        instance_module = DBInstanceModule.create(
+            instance_id=instance_id,
+            module_id=module_id,
+            md5=md5)
         return instance_module
 
     @staticmethod
@@ -452,7 +387,6 @@ class DBModule(models.DatabaseModelBase):
         'id', 'name', 'type', 'contents', 'description',
         'tenant_id', 'datastore_id', 'datastore_version_id',
         'auto_apply', 'visible', 'live_update',
-        'priority_apply', 'apply_order', 'is_admin',
         'md5', 'created', 'updated', 'deleted', 'deleted_at']
 
 

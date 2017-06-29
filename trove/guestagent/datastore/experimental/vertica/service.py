@@ -20,7 +20,6 @@ from oslo_utils import netutils
 from six.moves import configparser
 
 from trove.common import cfg
-from trove.common.db import models
 from trove.common import exception
 from trove.common.i18n import _
 from trove.common.i18n import _LI
@@ -34,6 +33,7 @@ from trove.guestagent.common import operating_system
 from trove.guestagent.common.operating_system import FileMode
 from trove.guestagent.datastore.experimental.vertica import system
 from trove.guestagent.datastore import service
+from trove.guestagent.db import models
 from trove.guestagent import pkg
 from trove.guestagent import volume
 
@@ -150,8 +150,8 @@ class VerticaApp(object):
                        (system.VERTICA_AGENT_SERVICE_COMMAND % "enable")]
             subprocess.Popen(command)
         except Exception:
-            LOG.exception(_("Failed to enable database on boot."))
-            raise RuntimeError(_("Could not enable database on boot."))
+            LOG.exception(_("Failed to enable db on boot."))
+            raise RuntimeError("Could not enable db on boot.")
 
     def _disable_db_on_boot(self):
         try:
@@ -160,8 +160,8 @@ class VerticaApp(object):
             command = (system.VERTICA_AGENT_SERVICE_COMMAND % "disable")
             system.shell_execute(command)
         except exception.ProcessExecutionError:
-            LOG.exception(_("Failed to disable database on boot."))
-            raise RuntimeError(_("Could not disable database on boot."))
+            LOG.exception(_("Failed to disable db on boot."))
+            raise RuntimeError("Could not disable db on boot.")
 
     def stop_db(self, update_db=False, do_not_start_on_reboot=False):
         """Stop the database."""
@@ -186,13 +186,13 @@ class VerticaApp(object):
                             self.state_change_wait_time, update_db):
                         LOG.error(_("Could not stop Vertica."))
                         self.status.end_restart()
-                        raise RuntimeError(_("Could not stop Vertica!"))
+                        raise RuntimeError("Could not stop Vertica!")
                 LOG.debug("Database stopped.")
             else:
                 LOG.debug("Database is not running.")
         except exception.ProcessExecutionError:
             LOG.exception(_("Failed to stop database."))
-            raise RuntimeError(_("Could not stop database."))
+            raise RuntimeError("Could not stop database.")
 
     def start_db(self, update_db=False):
         """Start the database."""
@@ -354,8 +354,8 @@ class VerticaApp(object):
                                            % func_name)
                 loaded_udls.append(func_name)
             else:
-                LOG.warning(_("Skipping %(func)s as path %(path)s not "
-                              "found.") % {"func": func_name, "path": path})
+                LOG.warning("Skipping %s as path %s not found." %
+                            (func_name, path))
         LOG.info(_("The following UDL functions are available for use: %s")
                  % loaded_udls)
 
@@ -475,7 +475,10 @@ class VerticaApp(object):
     def enable_root(self, root_password=None):
         """Resets the root password."""
         LOG.info(_LI("Enabling root."))
-        user = models.DatastoreUser.root(password=root_password)
+        user = models.RootUser()
+        user.name = "root"
+        user.host = "%"
+        user.password = root_password or utils.generate_random_password()
         if not self.is_root_enabled():
             self._create_user(user.name, user.password, 'pseudosuperuser')
         else:

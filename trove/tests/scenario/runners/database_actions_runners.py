@@ -52,11 +52,9 @@ class DatabaseActionsRunner(TestRunner):
 
     def assert_databases_create(self, instance_id, serial_databases_def,
                                 expected_http_code):
-        client = self.auth_client
-        client.databases.create(instance_id, serial_databases_def)
-        self.assert_client_code(client, expected_http_code)
-        self.wait_for_database_create(client,
-                                      instance_id, serial_databases_def)
+        self.auth_client.databases.create(instance_id, serial_databases_def)
+        self.assert_client_code(expected_http_code, client=self.auth_client)
+        self.wait_for_database_create(instance_id, serial_databases_def)
         return serial_databases_def
 
     def run_databases_list(self, expected_http_code=200):
@@ -65,9 +63,8 @@ class DatabaseActionsRunner(TestRunner):
 
     def assert_databases_list(self, instance_id, expected_database_defs,
                               expected_http_code, limit=2):
-        client = self.auth_client
-        full_list = client.databases.list(instance_id)
-        self.assert_client_code(client, expected_http_code)
+        full_list = self.auth_client.databases.list(instance_id)
+        self.assert_client_code(expected_http_code, client=self.auth_client)
         listed_databases = {database.name: database for database in full_list}
         self.assert_is_none(full_list.next,
                             "Unexpected pagination in the list.")
@@ -88,8 +85,8 @@ class DatabaseActionsRunner(TestRunner):
             "output.")
 
         # Test list pagination.
-        list_page = client.databases.list(instance_id, limit=limit)
-        self.assert_client_code(client, expected_http_code)
+        list_page = self.auth_client.databases.list(instance_id, limit=limit)
+        self.assert_client_code(expected_http_code, client=self.auth_client)
 
         self.assert_true(len(list_page) <= limit)
         if len(full_list) > limit:
@@ -105,9 +102,10 @@ class DatabaseActionsRunner(TestRunner):
             self.assert_equal(expected_marker, marker,
                               "Pagination marker should be the last element "
                               "in the page.")
-            list_page = client.databases.list(
+            list_page = self.auth_client.databases.list(
                 instance_id, marker=marker)
-            self.assert_client_code(client, expected_http_code)
+            self.assert_client_code(expected_http_code,
+                                    client=self.auth_client)
             self.assert_pagination_match(
                 list_page, full_list, limit, len(full_list))
 
@@ -134,11 +132,10 @@ class DatabaseActionsRunner(TestRunner):
     def assert_databases_create_failure(
             self, instance_id, serial_databases_def,
             expected_exception, expected_http_code):
-        client = self.auth_client
         self.assert_raises(
             expected_exception,
             expected_http_code,
-            client, client.databases.create,
+            self.auth_client.databases.create,
             instance_id,
             serial_databases_def)
 
@@ -166,18 +163,16 @@ class DatabaseActionsRunner(TestRunner):
             instance_id,
             database_name,
             expected_http_code):
-        client = self.auth_client
-        client.databases.delete(instance_id, database_name)
-        self.assert_client_code(client, expected_http_code)
-        self._wait_for_database_delete(client, instance_id, database_name)
+        self.auth_client.databases.delete(instance_id, database_name)
+        self.assert_client_code(expected_http_code, client=self.auth_client)
+        self._wait_for_database_delete(instance_id, database_name)
 
-    def _wait_for_database_delete(self, client,
-                                  instance_id, deleted_database_name):
+    def _wait_for_database_delete(self, instance_id, deleted_database_name):
         self.report.log("Waiting for deleted database to disappear from the "
                         "listing: %s" % deleted_database_name)
 
         def _db_is_gone():
-            all_dbs = self.get_db_names(client, instance_id)
+            all_dbs = self.get_db_names(instance_id)
             return deleted_database_name not in all_dbs
 
         try:
@@ -187,12 +182,12 @@ class DatabaseActionsRunner(TestRunner):
             self.fail("Database still listed after the poll timeout: %ds" %
                       self.GUEST_CAST_WAIT_TIMEOUT_SEC)
 
-    def run_nonexisting_database_delete(
-            self, expected_exception=exceptions.NotFound,
-            expected_http_code=404):
-        self.assert_database_delete_failure(
+    def run_nonexisting_database_delete(self, expected_http_code=202):
+        # Deleting a non-existing database is expected to succeed as if the
+        # database was deleted.
+        self.assert_database_delete(
             self.instance_info.id, self.non_existing_db_def['name'],
-            expected_exception, expected_http_code)
+            expected_http_code)
 
     def run_system_database_delete(
             self, expected_exception=exceptions.BadRequest,
@@ -210,9 +205,8 @@ class DatabaseActionsRunner(TestRunner):
     def assert_database_delete_failure(
             self, instance_id, database_name,
             expected_exception, expected_http_code):
-        client = self.auth_client
         self.assert_raises(expected_exception, expected_http_code,
-                           client, client.databases.delete,
+                           self.auth_client.databases.delete,
                            instance_id, database_name)
 
     def get_system_databases(self):

@@ -18,6 +18,7 @@ import csv
 
 from oslo_log import log as logging
 
+from trove.common import cfg
 from trove.common import exception
 from trove.common.i18n import _
 from trove.guestagent.backup.backupagent import BackupAgent
@@ -27,6 +28,7 @@ from trove.guestagent.datastore.mysql.service import MySqlApp
 from trove.guestagent.strategies.replication import mysql_base
 
 AGENT = BackupAgent()
+CONF = cfg.CONF
 
 LOG = logging.getLogger(__name__)
 

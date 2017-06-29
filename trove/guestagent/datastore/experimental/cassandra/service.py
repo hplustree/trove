@@ -26,7 +26,6 @@ from oslo_log import log as logging
 from oslo_utils import netutils
 
 from trove.common import cfg
-from trove.common.db.cassandra import models
 from trove.common import exception
 from trove.common.i18n import _
 from trove.common import instance as rd_instance
@@ -41,6 +40,7 @@ from trove.guestagent.common import guestagent_utils
 from trove.guestagent.common import operating_system
 from trove.guestagent.common.operating_system import FileMode
 from trove.guestagent.datastore import service
+from trove.guestagent.db import models
 from trove.guestagent import pkg
 
 
@@ -140,6 +140,10 @@ class CassandraApp(object):
     def cassandra_logback(self):
         return guestagent_utils.build_file_path(self.cassandra_conf_dir,
                                                 self.CASSANDRA_LOGBACK_FILE)
+
+    @property
+    def default_superuser_name(self):
+        return "cassandra"
 
     @property
     def default_superuser_password(self):
@@ -307,8 +311,7 @@ class CassandraApp(object):
             CassandraAdmin(update_user).alter_user_password(os_admin)
         else:
             cassandra = models.CassandraUser(
-                models.CassandraUser.root_username,
-                self.default_superuser_password)
+                self.default_superuser_name, self.default_superuser_password)
             CassandraAdmin(cassandra)._create_superuser(os_admin)
             CassandraAdmin(os_admin).drop_user(cassandra)
 
@@ -325,7 +328,7 @@ class CassandraApp(object):
         self.status = CassandraAppStatus(user)
 
     def store_admin_credentials(self, admin_credentials):
-        user = models.CassandraUser.deserialize(admin_credentials)
+        user = models.CassandraUser.deserialize_user(admin_credentials)
         self._update_admin_credentials(user)
 
     def get_admin_credentials(self):
@@ -445,8 +448,8 @@ class CassandraApp(object):
         LOG.warning(
             _("Trove administrative user has not been configured yet. "
               "Using the built-in default: %s")
-            % models.CassandraUser.root_username)
-        return models.CassandraUser(models.CassandraUser.root_username,
+            % self.default_superuser_name)
+        return models.CassandraUser(self.default_superuser_name,
                                     self.default_superuser_password)
 
     def has_user_config(self):
@@ -488,7 +491,7 @@ class CassandraApp(object):
 
     def _make_host_reachable(self):
         """
-        Some of these settings may be overridden by user defined
+        Some of these settings may be overriden by user defined
         configuration groups.
 
         authenticator and authorizer
@@ -728,7 +731,7 @@ class CassandraApp(object):
         Create a new superuser if it does not exist and grant it full
         superuser-level access to all keyspaces.
         """
-        cassandra = models.CassandraUser.root(password=root_password)
+        cassandra = models.CassandraRootUser(password=root_password)
         admin = self.build_admin()
         if self.is_root_enabled():
             admin.alter_user_password(cassandra)
@@ -894,7 +897,7 @@ class CassandraAdmin(object):
 
     def _load_user(self, client, username, check_reserved=True):
         if check_reserved:
-            models.CassandraUser(username).check_reserved()
+            self._check_reserved_user_name(username)
 
         acl = self._get_acl(client, username=username)
         return self._build_user(username, acl)
@@ -999,8 +1002,8 @@ class CassandraAdmin(object):
         Grant all non-superuser permissions on a keyspace to a given user.
         """
         if check_reserved:
-            user.check_reserved()
-            keyspace.check_reserved()
+            self._check_reserved_user_name(user.name)
+            self._check_reserved_keyspace_name(keyspace.name)
 
         for access in self.__NO_SUPERUSER_MODIFIERS:
             self._grant_permission_on_keyspace(client, access, keyspace, user)
@@ -1023,8 +1026,8 @@ class CassandraAdmin(object):
     def _revoke_all_access_on_keyspace(self, client, keyspace, user,
                                        check_reserved=True):
         if check_reserved:
-            user.check_reserved()
-            keyspace.check_reserved()
+            self._check_reserved_user_name(user.name)
+            self._check_reserved_keyspace_name(keyspace.name)
 
         LOG.debug("Revoking all permissions on '%s' from user '%s'."
                   % (keyspace.name, user.name))
@@ -1146,23 +1149,31 @@ class CassandraAdmin(object):
 
     def _deserialize_keyspace(self, keyspace_dict, check_reserved=True):
         if keyspace_dict:
-            db = models.CassandraSchema.deserialize(keyspace_dict)
+            db = models.CassandraSchema.deserialize_schema(keyspace_dict)
             if check_reserved:
-                db.check_reserved()
+                self._check_reserved_keyspace_name(db.name)
 
             return db
 
         return None
 
+    def _check_reserved_keyspace_name(self, name):
+        if name in self.ignore_dbs:
+            raise ValueError(_("This keyspace-name is reserved: %s") % name)
+
     def _deserialize_user(self, user_dict, check_reserved=True):
         if user_dict:
-            user = models.CassandraUser.deserialize(user_dict)
+            user = models.CassandraUser.deserialize_user(user_dict)
             if check_reserved:
-                user.check_reserved()
+                self._check_reserved_user_name(user.name)
 
             return user
 
         return None
+
+    def _check_reserved_user_name(self, name):
+        if name in self.ignore_users:
+            raise ValueError(_("This user-name is reserved: %s") % name)
 
     @property
     def ignore_users(self):

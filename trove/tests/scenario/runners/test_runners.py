@@ -14,14 +14,9 @@
 #    under the License.
 
 import datetime
-import inspect
-import json
-import netaddr
 import os
 import proboscis
-import six
 import time as timer
-import types
 
 from oslo_config.cfg import NoSuchOptError
 from proboscis import asserts
@@ -178,109 +173,8 @@ class InstanceTestInfo(object):
         self.user = None  # The user instance who owns the instance.
         self.users = None  # The users created on the instance.
         self.databases = None  # The databases created on the instance.
-        self.helper_user = None  # Test helper user if exists.
-        self.helper_database = None  # Test helper database if exists.
 
 
-class LogOnFail(type):
-
-    """Class to log info on failure.
-    This will decorate all methods that start with 'run_' with a log wrapper
-    that will do a show and attempt to pull back the guest log on all
-    registered IDs.
-    Use by setting up as a metaclass and calling the following:
-       add_inst_ids(): Instance ID or list of IDs to report on
-       set_client(): Admin client object
-       set_report(): Report object
-    The TestRunner class shows how this can be done in register_debug_inst_ids.
-    """
-
-    _data = {}
-
-    def __new__(mcs, name, bases, attrs):
-        for attr_name, attr_value in attrs.items():
-            if (isinstance(attr_value, types.FunctionType) and
-                    attr_name.startswith('run_')):
-                attrs[attr_name] = mcs.log(attr_value)
-        return super(LogOnFail, mcs).__new__(mcs, name, bases, attrs)
-
-    @classmethod
-    def get_inst_ids(mcs):
-        return set(mcs._data.get('inst_ids', []))
-
-    @classmethod
-    def add_inst_ids(mcs, inst_ids):
-        if not utils.is_collection(inst_ids):
-            inst_ids = [inst_ids]
-        debug_inst_ids = mcs.get_inst_ids()
-        debug_inst_ids |= set(inst_ids)
-        mcs._data['inst_ids'] = debug_inst_ids
-
-    @classmethod
-    def reset_inst_ids(mcs):
-        mcs._data['inst_ids'] = []
-
-    @classmethod
-    def set_client(mcs, client):
-        mcs._data['client'] = client
-
-    @classmethod
-    def get_client(mcs):
-        return mcs._data['client']
-
-    @classmethod
-    def set_report(mcs, report):
-        mcs._data['report'] = report
-
-    @classmethod
-    def get_report(mcs):
-        return mcs._data['report']
-
-    @classmethod
-    def log(mcs, fn):
-
-        def wrapper(*args, **kwargs):
-            inst_ids = mcs.get_inst_ids()
-            client = mcs.get_client()
-            report = mcs.get_report()
-            try:
-                return fn(*args, **kwargs)
-            except proboscis.SkipTest:
-                raise
-            except Exception as test_ex:
-                msg_prefix = "*** LogOnFail: "
-                if inst_ids:
-                    report.log(msg_prefix + "Exception detected, "
-                               "dumping info for IDs: %s." % inst_ids)
-                else:
-                    report.log(msg_prefix + "Exception detected, "
-                               "but no instance IDs are registered to log.")
-
-                for inst_id in inst_ids:
-                    try:
-                        client.instances.get(inst_id)
-                    except Exception as ex:
-                        report.log(msg_prefix + "Error in instance show "
-                                   "for %s:\n%s" % (inst_id, ex))
-                    try:
-                        log_gen = client.instances.log_generator(
-                            inst_id, 'guest',
-                            publish=True, lines=0, swift=None)
-                        log_contents = "".join([chunk for chunk in log_gen()])
-                        report.log(msg_prefix + "Guest log for %s:\n%s" %
-                                   (inst_id, log_contents))
-                    except Exception as ex:
-                        report.log(msg_prefix + "Error in guest log "
-                                   "retrieval for %s:\n%s" % (inst_id, ex))
-
-                # Only report on the first error that occurs
-                mcs.reset_inst_ids()
-                raise test_ex
-
-        return wrapper
-
-
-@six.add_metaclass(LogOnFail)
 class TestRunner(object):
 
     """
@@ -335,10 +229,6 @@ class TestRunner(object):
         else:
             self.instance_info.volume_size = None
             self.instance_info.volume = None
-        self.instance_info.nics = None
-        shared_network = CONFIG.get('shared_network', None)
-        if shared_network:
-            self.instance_info.nics = [{'net-id': shared_network}]
 
         self._auth_client = None
         self._unauth_client = None
@@ -347,14 +237,6 @@ class TestRunner(object):
         self._nova_client = None
         self._test_helper = None
         self._servers = {}
-
-        # Attempt to register the main instance.  If it doesn't
-        # exist, this will still set the 'report' and 'client' objects
-        # correctly in LogOnFail
-        inst_ids = []
-        if hasattr(self.instance_info, 'id') and self.instance_info.id:
-            inst_ids = [self.instance_info.id]
-        self.register_debug_inst_ids(inst_ids)
 
     @classmethod
     def fail(cls, message):
@@ -432,7 +314,9 @@ class TestRunner(object):
 
     @property
     def auth_client(self):
-        return self._create_authorized_client()
+        if not self._auth_client:
+            self._auth_client = self._create_authorized_client()
+        return self._auth_client
 
     def _create_authorized_client(self):
         """Create a client from the normal 'authorized' user."""
@@ -440,7 +324,9 @@ class TestRunner(object):
 
     @property
     def unauth_client(self):
-        return self._create_unauthorized_client()
+        if not self._unauth_client:
+            self._unauth_client = self._create_unauthorized_client()
+        return self._unauth_client
 
     def _create_unauthorized_client(self):
         """Create a client from a different 'unauthorized' user
@@ -453,7 +339,9 @@ class TestRunner(object):
 
     @property
     def admin_client(self):
-        return self._create_admin_client()
+        if not self._admin_client:
+            self._admin_client = self._create_admin_client()
+        return self._admin_client
 
     def _create_admin_client(self):
         """Create a client from an admin user."""
@@ -463,7 +351,9 @@ class TestRunner(object):
 
     @property
     def swift_client(self):
-        return self._create_swift_client()
+        if not self._swift_client:
+            self._swift_client = self._create_swift_client()
+        return self._swift_client
 
     def _create_swift_client(self):
         """Create a swift client from the admin user details."""
@@ -480,16 +370,9 @@ class TestRunner(object):
 
     @property
     def nova_client(self):
-        return create_nova_client(self.instance_info.user)
-
-    def register_debug_inst_ids(self, inst_ids):
-        """Method to 'register' an instance ID (or list of instance IDs)
-        for debug purposes on failure.  Note that values are only appended
-        here, not overridden.  The LogOnFail class will handle 'missing' IDs.
-        """
-        LogOnFail.add_inst_ids(inst_ids)
-        LogOnFail.set_client(self.admin_client)
-        LogOnFail.set_report(self.report)
+        if not self._nova_client:
+            self._nova_client = create_nova_client(self.instance_info.user)
+        return self._nova_client
 
     def get_client_tenant(self, client):
         tenant_name = client.real_client.client.tenant
@@ -499,26 +382,11 @@ class TestRunner(object):
         return tenant_name, tenant_id
 
     def assert_raises(self, expected_exception, expected_http_code,
-                      client, client_cmd, *cmd_args, **cmd_kwargs):
-        if client:
-            # Make sure that the client_cmd comes from the same client that
-            # was passed in, otherwise asserting the client code may fail.
-            cmd_clz = client_cmd.im_self
-            cmd_clz_name = cmd_clz.__class__.__name__
-            client_attrs = [attr[0] for attr in inspect.getmembers(
-                            client.real_client)
-                            if '__' not in attr[0]]
-            match = [getattr(client, a) for a in client_attrs
-                     if getattr(client, a).__class__.__name__ == cmd_clz_name]
-            self.assert_true(any(match),
-                             "Could not find method class in client: %s" %
-                             client_attrs)
-            self.assert_equal(
-                match[0], cmd_clz,
-                "Test error: client_cmd must be from client obj")
+                      client_cmd, *cmd_args, **cmd_kwargs):
         asserts.assert_raises(expected_exception, client_cmd,
                               *cmd_args, **cmd_kwargs)
-        self.assert_client_code(client, expected_http_code)
+
+        self.assert_client_code(expected_http_code)
 
     def get_datastore_config_property(self, name, datastore=None):
         """Get a Trove configuration property for a given datastore.
@@ -554,14 +422,17 @@ class TestRunner(object):
     def has_do_not_delete_instance(self):
         return self.has_env_flag(self.DO_NOT_DELETE_INSTANCE_FLAG)
 
-    def assert_instance_action(self, instance_ids, expected_states):
+    def assert_instance_action(
+            self, instance_ids, expected_states, expected_http_code=None):
+        self.assert_client_code(expected_http_code)
         if expected_states:
             self.assert_all_instance_states(
                 instance_ids if utils.is_collection(instance_ids)
                 else [instance_ids], expected_states)
 
-    def assert_client_code(self, client, expected_http_code):
-        if client and expected_http_code is not None:
+    def assert_client_code(self, expected_http_code, client=None):
+        if expected_http_code is not None:
+            client = client or self.auth_client
             self.assert_equal(expected_http_code, client.last_http_code,
                               "Unexpected client status code")
 
@@ -612,18 +483,16 @@ class TestRunner(object):
             fast_fail_status = ['ERROR', 'FAILED']
         found = False
         for status in expected_states:
-            found_current = self._has_status(
-                instance_id, status, fast_fail_status=fast_fail_status)
-            if require_all_states or found or found_current:
+            if require_all_states or found or self._has_status(
+                    instance_id, status, fast_fail_status=fast_fail_status):
                 found = True
                 start_time = timer.time()
                 try:
-                    if not found_current:
-                        poll_until(lambda: self._has_status(
-                            instance_id, status,
-                            fast_fail_status=fast_fail_status),
-                            sleep_time=self.def_sleep_time,
-                            time_out=self.def_timeout)
+                    poll_until(lambda: self._has_status(
+                        instance_id, status,
+                        fast_fail_status=fast_fail_status),
+                        sleep_time=self.def_sleep_time,
+                        time_out=self.def_timeout)
                     self.report.log("Instance '%s' has gone '%s' in %s." %
                                     (instance_id, status,
                                      self._time_since(start_time)))
@@ -759,16 +628,10 @@ class TestRunner(object):
         client = client or self.auth_client
         return client.instances.get(instance_id)
 
-    def extract_ipv4s(self, ips):
-        ipv4s = [str(ip) for ip in ips if netaddr.valid_ipv4(ip)]
-        if not ipv4s:
-            self.fail("No IPV4 ip found")
-        return ipv4s
-
     def get_instance_host(self, instance_id=None):
         instance_id = instance_id or self.instance_info.id
         instance = self.get_instance(instance_id)
-        host = self.extract_ipv4s(instance._info['ip'])[0]
+        host = str(instance._info['ip'][0])
         self.report.log("Found host %s for instance %s." % (host, instance_id))
         return host
 
@@ -815,20 +678,19 @@ class TestRunner(object):
         not be changed by individual test-cases.
         """
         database_def, user_def, root_def = self.build_helper_defs()
-        client = self.auth_client
         if database_def:
             self.report.log(
                 "Creating a helper database '%s' on instance: %s"
                 % (database_def['name'], instance_id))
-            client.databases.create(instance_id, [database_def])
-            self.wait_for_database_create(client, instance_id, [database_def])
+            self.auth_client.databases.create(instance_id, [database_def])
+            self.wait_for_database_create(instance_id, [database_def])
 
         if user_def:
             self.report.log(
                 "Creating a helper user '%s:%s' on instance: %s"
                 % (user_def['name'], user_def['password'], instance_id))
-            client.users.create(instance_id, [user_def])
-            self.wait_for_user_create(client, instance_id, [user_def])
+            self.auth_client.users.create(instance_id, [user_def])
+            self.wait_for_user_create(instance_id, [user_def])
 
         if root_def:
             # Not enabling root on a single instance of the cluster here
@@ -861,14 +723,14 @@ class TestRunner(object):
                 _get_credentials(credentials),
                 _get_credentials(credentials_root))
 
-    def wait_for_user_create(self, client, instance_id, expected_user_defs):
+    def wait_for_user_create(self, instance_id, expected_user_defs):
         expected_user_names = {user_def['name']
                                for user_def in expected_user_defs}
         self.report.log("Waiting for all created users to appear in the "
                         "listing: %s" % expected_user_names)
 
         def _all_exist():
-            all_users = self.get_user_names(client, instance_id)
+            all_users = self.get_user_names(instance_id)
             return all(usr in all_users for usr in expected_user_names)
 
         try:
@@ -878,19 +740,18 @@ class TestRunner(object):
             self.fail("Some users were not created within the poll "
                       "timeout: %ds" % self.GUEST_CAST_WAIT_TIMEOUT_SEC)
 
-    def get_user_names(self, client, instance_id):
-        full_list = client.users.list(instance_id)
+    def get_user_names(self, instance_id):
+        full_list = self.auth_client.users.list(instance_id)
         return {user.name: user for user in full_list}
 
-    def wait_for_database_create(self, client,
-                                 instance_id, expected_database_defs):
+    def wait_for_database_create(self, instance_id, expected_database_defs):
         expected_db_names = {db_def['name']
                              for db_def in expected_database_defs}
         self.report.log("Waiting for all created databases to appear in the "
                         "listing: %s" % expected_db_names)
 
         def _all_exist():
-            all_dbs = self.get_db_names(client, instance_id)
+            all_dbs = self.get_db_names(instance_id)
             return all(db in all_dbs for db in expected_db_names)
 
         try:
@@ -900,28 +761,9 @@ class TestRunner(object):
             self.fail("Some databases were not created within the poll "
                       "timeout: %ds" % self.GUEST_CAST_WAIT_TIMEOUT_SEC)
 
-    def get_db_names(self, client, instance_id):
-        full_list = client.databases.list(instance_id)
+    def get_db_names(self, instance_id):
+        full_list = self.auth_client.databases.list(instance_id)
         return {database.name: database for database in full_list}
-
-    def create_initial_configuration(self, expected_http_code):
-        client = self.auth_client
-        dynamic_config = self.test_helper.get_dynamic_group()
-        non_dynamic_config = self.test_helper.get_non_dynamic_group()
-        values = dynamic_config or non_dynamic_config
-        if values:
-            json_def = json.dumps(values)
-            result = client.configurations.create(
-                'initial_configuration_for_create_tests',
-                json_def,
-                "Configuration group used by create tests.",
-                datastore=self.instance_info.dbaas_datastore,
-                datastore_version=self.instance_info.dbaas_datastore_version)
-            self.assert_client_code(client, expected_http_code)
-
-            return (result.id, dynamic_config is None)
-
-        return (None, False)
 
 
 class CheckInstance(AttrCheck):

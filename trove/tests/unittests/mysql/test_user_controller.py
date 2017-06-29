@@ -30,17 +30,17 @@ class TestUserController(trove_testtools.TestCase):
     def test_get_create_schema(self):
         body = {'users': [{'name': 'test', 'password': 'test'}]}
         schema = self.controller.get_schema('create', body)
-        self.assertIn('users', schema['properties'])
+        self.assertTrue('users' in schema['properties'])
 
     def test_get_update_user_pw(self):
         body = {'users': [{'name': 'test', 'password': 'test'}]}
         schema = self.controller.get_schema('update_all', body)
-        self.assertIn('users', schema['properties'])
+        self.assertTrue('users' in schema['properties'])
 
     def test_get_update_user_db(self):
         body = {'databases': [{'name': 'test'}, {'name': 'test'}]}
         schema = self.controller.get_schema('update_all', body)
-        self.assertIn('databases', schema['properties'])
+        self.assertTrue('databases' in schema['properties'])
 
     def test_validate_create_empty(self):
         body = {"users": []}
@@ -259,7 +259,7 @@ class TestUserController(trove_testtools.TestCase):
     def test_get_update_user_attributes(self):
         body = {'user': {'name': 'test'}}
         schema = self.controller.get_schema('update', body)
-        self.assertIn('user', schema['properties'])
+        self.assertTrue('user' in schema['properties'])
 
     def test_validate_update_user_attributes(self):
         body = {'user': {'name': 'test', 'password': 'test', 'host': '%'}}
@@ -337,7 +337,7 @@ class TestSchemaController(trove_testtools.TestCase):
 
     def test_validate_mixed(self):
         schema = self.controller.get_schema('create', self.body)
-        self.assertIsNotNone(schema)
+        self.assertNotEqual(schema, None)
         validator = jsonschema.Draft4Validator(schema)
         self.assertTrue(validator.is_valid(self.body))
 
@@ -345,14 +345,14 @@ class TestSchemaController(trove_testtools.TestCase):
         body = self.body.copy()
         body['databases'].append({"collate": "some_collation"})
         schema = self.controller.get_schema('create', body)
-        self.assertIsNotNone(schema)
+        self.assertNotEqual(schema, None)
         validator = jsonschema.Draft4Validator(schema)
         self.assertFalse(validator.is_valid(body))
 
     def test_validate_empty(self):
         body = {"databases": []}
         schema = self.controller.get_schema('create', body)
-        self.assertIsNotNone(schema)
-        self.assertIn('databases', body)
+        self.assertNotEqual(schema, None)
+        self.assertTrue('databases' in body)
         validator = jsonschema.Draft4Validator(schema)
         self.assertTrue(validator.is_valid(body))

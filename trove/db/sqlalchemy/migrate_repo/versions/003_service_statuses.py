@@ -18,6 +18,7 @@ from sqlalchemy.schema import MetaData
 
 from trove.db.sqlalchemy.migrate_repo.schema import create_tables
 from trove.db.sqlalchemy.migrate_repo.schema import DateTime
+from trove.db.sqlalchemy.migrate_repo.schema import drop_tables
 from trove.db.sqlalchemy.migrate_repo.schema import Integer
 from trove.db.sqlalchemy.migrate_repo.schema import String
 from trove.db.sqlalchemy.migrate_repo.schema import Table
@@ -38,3 +39,8 @@ service_statuses = Table(
 def upgrade(migrate_engine):
     meta.bind = migrate_engine
     create_tables([service_statuses])
+
+
+def downgrade(migrate_engine):
+    meta.bind = migrate_engine
+    drop_tables([service_statuses])

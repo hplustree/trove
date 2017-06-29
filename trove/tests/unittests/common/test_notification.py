@@ -168,7 +168,7 @@ class TestTroveCommonTraits(trove_testtools.TestCase):
         self.assertTrue(notifier().info.called)
         a, _ = notifier().info.call_args
         payload = a[2]
-        self.assertIn('availability_zone', payload)
+        self.assertTrue('availability_zone' in payload)
 
     @patch.object(cfg.CONF, 'get', Mock())
     @patch.object(rpc, 'get_notifier')
@@ -350,11 +350,11 @@ class TestDBaaSNotification(trove_testtools.TestCase):
         self.assertTrue(notifier().info.called)
         a, _ = notifier().info.call_args
         payload = a[2]
-        self.assertIn('client_ip', payload)
-        self.assertIn('request_id', payload)
-        self.assertIn('server_type', payload)
-        self.assertIn('server_ip', payload)
-        self.assertIn('tenant_id', payload)
+        self.assertTrue('client_ip' in payload)
+        self.assertTrue('request_id' in payload)
+        self.assertTrue('server_type' in payload)
+        self.assertTrue('server_ip' in payload)
+        self.assertTrue('tenant_id' in payload)
 
     @patch.object(rpc, 'get_notifier')
     def test_verify_required_start_args(self, notifier):
@@ -362,10 +362,10 @@ class TestDBaaSNotification(trove_testtools.TestCase):
         self.assertTrue(notifier().info.called)
         a, _ = notifier().info.call_args
         payload = a[2]
-        self.assertIn('name', payload)
-        self.assertIn('flavor_id', payload)
-        self.assertIn('datastore', payload)
-        self.assertNotIn('users', payload)
+        self.assertTrue('name' in payload)
+        self.assertTrue('flavor_id' in payload)
+        self.assertTrue('datastore' in payload)
+        self.assertTrue('users' not in payload)
 
     @patch.object(rpc, 'get_notifier')
     def test_verify_optional_start_args(self, notifier):
@@ -374,7 +374,7 @@ class TestDBaaSNotification(trove_testtools.TestCase):
         self.assertTrue(notifier().info.called)
         a, _ = notifier().info.call_args
         payload = a[2]
-        self.assertIn('users', payload)
+        self.assertTrue('users' in payload)
 
     @patch.object(rpc, 'get_notifier')
     def test_verify_required_end_args(self, notifier):
@@ -382,7 +382,7 @@ class TestDBaaSNotification(trove_testtools.TestCase):
         self.assertTrue(notifier().info.called)
         a, _ = notifier().info.call_args
         payload = a[2]
-        self.assertIn('instance_id', payload)
+        self.assertTrue('instance_id' in payload)
 
     def _test_notify_callback(self, fn, *args, **kwargs):
         with patch.object(rpc, 'get_notifier') as notifier:

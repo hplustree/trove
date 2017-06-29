@@ -24,7 +24,6 @@ from trove.extensions.common import models
 from trove.extensions.common.service import ClusterRootController
 from trove.extensions.common.service import DefaultRootController
 from trove.extensions.common.service import RootController
-from trove.instance import models as instance_models
 from trove.instance.models import DBInstance
 from trove.tests.unittests import trove_testtools
 
@@ -91,20 +90,16 @@ class TestRootController(trove_testtools.TestCase):
 
     def setUp(self):
         super(TestRootController, self).setUp()
-        self.context = trove_testtools.TroveTestContext(self)
         self.controller = RootController()
 
-    @patch.object(instance_models.Instance, "load")
     @patch.object(RootController, "load_root_controller")
     @patch.object(RootController, "_get_datastore")
-    def test_index(self, service_get_datastore, service_load_root_controller,
-                   service_load_instance):
+    def test_index(self, service_get_datastore, service_load_root_controller):
         req = Mock()
-        req.environ = {'trove.context': self.context}
         tenant_id = Mock()
         uuid = utils.generate_uuid()
         ds_manager = Mock()
-        is_cluster = False
+        is_cluster = Mock()
         service_get_datastore.return_value = (ds_manager, is_cluster)
         root_controller = Mock()
         ret = Mock()
@@ -117,18 +112,15 @@ class TestRootController(trove_testtools.TestCase):
         root_controller.root_index.assert_called_with(
             req, tenant_id, uuid, is_cluster)
 
-    @patch.object(instance_models.Instance, "load")
     @patch.object(RootController, "load_root_controller")
     @patch.object(RootController, "_get_datastore")
-    def test_create(self, service_get_datastore, service_load_root_controller,
-                    service_load_instance):
+    def test_create(self, service_get_datastore, service_load_root_controller):
         req = Mock()
-        req.environ = {'trove.context': self.context}
         body = Mock()
         tenant_id = Mock()
         uuid = utils.generate_uuid()
         ds_manager = Mock()
-        is_cluster = False
+        is_cluster = Mock()
         service_get_datastore.return_value = (ds_manager, is_cluster)
         root_controller = Mock()
         ret = Mock()
@@ -142,20 +134,17 @@ class TestRootController(trove_testtools.TestCase):
         root_controller.root_create.assert_called_with(
             req, body, tenant_id, uuid, is_cluster)
 
-    @patch.object(instance_models.Instance, "load")
     @patch.object(RootController, "load_root_controller")
     @patch.object(RootController, "_get_datastore")
     def test_create_with_no_root_controller(self,
                                             service_get_datastore,
-                                            service_load_root_controller,
-                                            service_load_instance):
+                                            service_load_root_controller):
         req = Mock()
-        req.environ = {'trove.context': self.context}
         body = Mock()
         tenant_id = Mock()
         uuid = utils.generate_uuid()
         ds_manager = Mock()
-        is_cluster = False
+        is_cluster = Mock()
         service_get_datastore.return_value = (ds_manager, is_cluster)
         service_load_root_controller.return_value = None
 
@@ -171,7 +160,6 @@ class TestClusterRootController(trove_testtools.TestCase):
 
     def setUp(self):
         super(TestClusterRootController, self).setUp()
-        self.context = trove_testtools.TroveTestContext(self)
         self.controller = ClusterRootController()
 
     @patch.object(ClusterRootController, "cluster_root_index")
@@ -216,18 +204,22 @@ class TestClusterRootController(trove_testtools.TestCase):
 
     @patch.object(models.ClusterRoot, "load")
     def test_instance_root_index(self, mock_cluster_root_load):
+        context = Mock()
         req = Mock()
-        req.environ = {'trove.context': self.context}
+        req.environ = Mock()
+        req.environ.__getitem__ = Mock(return_value=context)
         tenant_id = Mock()
         instance_id = utils.generate_uuid()
         self.controller.instance_root_index(req, tenant_id, instance_id)
-        mock_cluster_root_load.assert_called_with(self.context, instance_id)
+        mock_cluster_root_load.assert_called_with(context, instance_id)
 
     @patch.object(models.ClusterRoot, "load",
                   side_effect=exception.UnprocessableEntity())
     def test_instance_root_index_exception(self, mock_cluster_root_load):
+        context = Mock()
         req = Mock()
-        req.environ = {'trove.context': self.context}
+        req.environ = Mock()
+        req.environ.__getitem__ = Mock(return_value=context)
         tenant_id = Mock()
         instance_id = utils.generate_uuid()
         self.assertRaises(
@@ -235,7 +227,7 @@ class TestClusterRootController(trove_testtools.TestCase):
             self.controller.instance_root_index,
             req, tenant_id, instance_id
         )
-        mock_cluster_root_load.assert_called_with(self.context, instance_id)
+        mock_cluster_root_load.assert_called_with(context, instance_id)
 
     @patch.object(ClusterRootController, "instance_root_index")
     @patch.object(ClusterRootController, "_get_cluster_instance_id")
@@ -286,10 +278,12 @@ class TestClusterRootController(trove_testtools.TestCase):
     @patch.object(models.ClusterRoot, "create")
     def test_instance_root_create(self, mock_cluster_root_create):
         user = Mock()
-        self.context.user = Mock()
-        self.context.user.__getitem__ = Mock(return_value=user)
+        context = Mock()
+        context.user = Mock()
+        context.user.__getitem__ = Mock(return_value=user)
         req = Mock()
-        req.environ = {'trove.context': self.context}
+        req.environ = Mock()
+        req.environ.__getitem__ = Mock(return_value=context)
         password = Mock()
         body = {'password': password}
         instance_id = utils.generate_uuid()
@@ -297,16 +291,17 @@ class TestClusterRootController(trove_testtools.TestCase):
         self.controller.instance_root_create(
             req, body, instance_id, cluster_instances)
         mock_cluster_root_create.assert_called_with(
-            self.context, instance_id, self.context.user, password,
-            cluster_instances)
+            context, instance_id, context.user, password, cluster_instances)
 
     @patch.object(models.ClusterRoot, "create")
     def test_instance_root_create_no_body(self, mock_cluster_root_create):
         user = Mock()
-        self.context.user = Mock()
-        self.context.user.__getitem__ = Mock(return_value=user)
+        context = Mock()
+        context.user = Mock()
+        context.user.__getitem__ = Mock(return_value=user)
         req = Mock()
-        req.environ = {'trove.context': self.context}
+        req.environ = Mock()
+        req.environ.__getitem__ = Mock(return_value=context)
         password = None
         body = None
         instance_id = utils.generate_uuid()
@@ -314,5 +309,4 @@ class TestClusterRootController(trove_testtools.TestCase):
         self.controller.instance_root_create(
             req, body, instance_id, cluster_instances)
         mock_cluster_root_create.assert_called_with(
-            self.context, instance_id, self.context.user, password,
-            cluster_instances)
+            context, instance_id, context.user, password, cluster_instances)

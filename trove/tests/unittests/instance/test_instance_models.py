@@ -25,7 +25,6 @@ from trove.instance.models import DBInstance
 from trove.instance.models import DBInstanceFault
 from trove.instance.models import filter_ips
 from trove.instance.models import Instance
-from trove.instance.models import instance_encryption_key_cache
 from trove.instance.models import InstanceServiceStatus
 from trove.instance.models import SimpleInstance
 from trove.instance.tasks import InstanceTasks
@@ -74,8 +73,8 @@ class SimpleInstanceTest(trove_testtools.TestCase):
         ip = filter_ips(
             ip, CONF.ip_regex, CONF.black_list_regex)
         self.assertEqual(2, len(ip))
-        self.assertIn('123.123.123.123', ip)
-        self.assertIn('15.123.123.123', ip)
+        self.assertTrue('123.123.123.123' in ip)
+        self.assertTrue('15.123.123.123' in ip)
 
     def test_filter_ips_black_list(self):
         CONF.network_label_regex = '.*'
@@ -85,7 +84,7 @@ class SimpleInstanceTest(trove_testtools.TestCase):
         ip = filter_ips(
             ip, CONF.ip_regex, CONF.black_list_regex)
         self.assertEqual(2, len(ip))
-        self.assertNotIn('10.123.123.123', ip)
+        self.assertTrue('10.123.123.123' not in ip)
 
     def test_one_network_label(self):
         CONF.network_label_regex = 'public'
@@ -96,16 +95,16 @@ class SimpleInstanceTest(trove_testtools.TestCase):
         CONF.network_label_regex = '^(private|public)$'
         ip = self.instance.get_visible_ip_addresses()
         self.assertEqual(2, len(ip))
-        self.assertIn('123.123.123.123', ip)
-        self.assertIn('15.123.123.123', ip)
+        self.assertTrue('123.123.123.123' in ip)
+        self.assertTrue('15.123.123.123' in ip)
 
     def test_all_network_labels(self):
         CONF.network_label_regex = '.*'
         ip = self.instance.get_visible_ip_addresses()
         self.assertEqual(3, len(ip))
-        self.assertIn('10.123.123.123', ip)
-        self.assertIn('123.123.123.123', ip)
-        self.assertIn('15.123.123.123', ip)
+        self.assertTrue('10.123.123.123' in ip)
+        self.assertTrue('123.123.123.123' in ip)
+        self.assertTrue('15.123.123.123' in ip)
 
     def test_locality(self):
         self.assertEqual('affinity', self.instance.locality)
@@ -293,8 +292,7 @@ class TestInstanceUpgrade(trove_testtools.TestCase):
 
     @patch.object(task_api.API, 'get_client', Mock(return_value=Mock()))
     @patch.object(task_api.API, 'upgrade')
-    @patch('trove.tests.fakes.nova.LOG')
-    def test_upgrade(self, mock_logging, task_upgrade):
+    def test_upgrade(self, task_upgrade):
         instance_model = DBInstance(
             InstanceTasks.NONE,
             id=str(uuid.uuid4()),
@@ -404,53 +402,3 @@ class TestReplication(trove_testtools.TestCase):
                           None, 'name', 2, "UUID", [], [], None,
                           self.datastore_version, 1,
                           None, slave_of_id=self.replica_info.id)
-
-
-def trivial_key_function(id):
-    return id * id
-
-
-class TestInstanceKeyCaching(trove_testtools.TestCase):
-
-    def setUp(self):
-        super(TestInstanceKeyCaching, self).setUp()
-
-    def tearDown(self):
-        super(TestInstanceKeyCaching, self).tearDown()
-
-    def test_basic_caching(self):
-        keycache = instance_encryption_key_cache(trivial_key_function, 5)
-        self.assertEqual(keycache[5], 25)
-        self.assertEqual(keycache[5], 25)
-        self.assertEqual(keycache[25], 625)
-
-    def test_caching(self):
-        keyfn = Mock(return_value=123)
-        keycache = instance_encryption_key_cache(keyfn, 5)
-        self.assertEqual(keycache[5], 123)
-        self.assertEqual(keyfn.call_count, 1)
-        self.assertEqual(keycache[5], 123)
-        self.assertEqual(keyfn.call_count, 1)
-        self.assertEqual(keycache[6], 123)
-        self.assertEqual(keyfn.call_count, 2)
-        self.assertEqual(keycache[7], 123)
-        self.assertEqual(keyfn.call_count, 3)
-        self.assertEqual(keycache[8], 123)
-        self.assertEqual(keyfn.call_count, 4)
-        self.assertEqual(keycache[9], 123)
-        self.assertEqual(keyfn.call_count, 5)
-        self.assertEqual(keycache[10], 123)
-        self.assertEqual(keyfn.call_count, 6)
-        self.assertEqual(keycache[10], 123)
-        self.assertEqual(keyfn.call_count, 6)
-        self.assertEqual(keycache[5], 123)
-        self.assertEqual(keyfn.call_count, 7)
-
-    # BUG(1650518): Cleanup in the Pike release
-    def test_not_caching_none(self):
-        keyfn = Mock(return_value=None)
-        keycache = instance_encryption_key_cache(keyfn, 5)
-        self.assertIsNone(keycache[30])
-        self.assertEqual(keyfn.call_count, 1)
-        self.assertIsNone(keycache[30])
-        self.assertEqual(keyfn.call_count, 2)

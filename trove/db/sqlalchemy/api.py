@@ -50,11 +50,6 @@ def find_by(model, **kwargs):
     return _query_by(model, **kwargs).first()
 
 
-def find_by_filter(model, **kwargs):
-    filters = kwargs.pop('filters', [])
-    return _query_by_filter(model, *filters, **kwargs)
-
-
 def save(model):
     try:
         db_session = session.get_session()
@@ -112,6 +107,10 @@ def db_upgrade(options, version=None, repo_path=None):
     migration.upgrade(options, version, repo_path)
 
 
+def db_downgrade(options, version, repo_path=None):
+    migration.downgrade(options, version, repo_path)
+
+
 def db_reset(options, *plugins):
     drop_db(options)
     db_sync(options)
@@ -126,13 +125,6 @@ def _query_by(cls, **conditions):
     query = _base_query(cls)
     if conditions:
         query = query.filter_by(**conditions)
-    return query
-
-
-def _query_by_filter(cls, *filters, **conditions):
-    query = _query_by(cls, **conditions)
-    if filters:
-        query = query.filter(*filters)
     return query
 
 

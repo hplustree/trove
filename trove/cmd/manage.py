@@ -22,6 +22,7 @@ gettext.install('trove', unicode=1)
 
 
 from oslo_log import log as logging
+from oslo_log.versionutils import deprecated
 
 from trove.common import cfg
 from trove.common import exception
@@ -46,8 +47,9 @@ class Commands(object):
     def db_upgrade(self, version=None, repo_path=None):
         self.db_api.db_upgrade(CONF, version, repo_path=repo_path)
 
+    @deprecated(as_of=deprecated.MITAKA)
     def db_downgrade(self, version, repo_path=None):
-        raise SystemExit(_("Database downgrade is no longer supported."))
+        self.db_api.db_downgrade(CONF, version, repo_path=repo_path)
 
     def execute(self):
         exec_method = getattr(self, CONF.action.name)
@@ -136,6 +138,12 @@ def main():
         parser.add_argument(
             '--version', help='Target version. Defaults to the '
             'latest version.')
+        parser.add_argument('--repo_path', help=repo_path_help)
+
+        parser = subparser.add_parser(
+            'db_downgrade', description='Downgrade the database to the '
+            'specified version.')
+        parser.add_argument('version', help='Target version.')
         parser.add_argument('--repo_path', help=repo_path_help)
 
         parser = subparser.add_parser(

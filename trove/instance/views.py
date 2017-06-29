@@ -15,11 +15,12 @@
 
 from oslo_log import log as logging
 
+from trove.common import cfg
 from trove.common.views import create_links
-from trove.common import wsgi
 from trove.instance import models
 
 LOG = logging.getLogger(__name__)
+CONF = cfg.CONF
 
 
 class InstanceView(object):
@@ -28,7 +29,6 @@ class InstanceView(object):
     def __init__(self, instance, req=None):
         self.instance = instance
         self.req = req
-        self.context = req.environ[wsgi.CONTEXT_KEY]
 
     def data(self):
         instance_dict = {
@@ -39,10 +39,7 @@ class InstanceView(object):
             "flavor": self._build_flavor_info(),
             "datastore": {"type": self.instance.datastore.name,
                           "version": self.instance.datastore_version.name},
-            "region": self.instance.region_name
         }
-        if self.context.is_admin:
-            instance_dict['tenant_id'] = self.instance.tenant_id
         if self.instance.volume_support:
             instance_dict['volume'] = {'size': self.instance.volume_size}
 
@@ -126,12 +123,6 @@ class InstanceDetailView(InstanceView):
         if self.instance.shard_id:
             result['instance']['shard_id'] = self.instance.shard_id
 
-        if self.context.is_admin:
-            result['instance']['server_id'] = self.instance.server_id
-            result['instance']['volume_id'] = self.instance.volume_id
-            result['instance']['encrypted_rpc_messaging'] = (
-                self.instance.encrypted_rpc_messaging)
-
         return result
 
     def _build_fault_info(self):
@@ -214,19 +205,3 @@ class GuestLogsView(object):
 
     def data(self):
         return [GuestLogView(l).data() for l in self.guest_logs]
-
-
-def convert_instance_count_to_list(instance_count):
-    instance_list = []
-    for row in instance_count:
-        (_, name, id, md5, count, current, min_date, max_date) = row
-        instance_list.append(
-            {'module_name': name,
-             'module_id': id,
-             'module_md5': md5,
-             'instance_count': count,
-             'current': current,
-             'min_updated_date': min_date,
-             'max_updated_date': max_date
-             })
-    return instance_list

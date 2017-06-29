@@ -28,7 +28,6 @@ from troveclient.compat import exceptions
 from trove.common.utils import poll_until
 from trove.tests.api.instances import EPHEMERAL_SUPPORT
 from trove.tests.api.instances import VOLUME_SUPPORT
-from trove.tests.config import CONFIG
 from trove.tests.util import create_client
 from trove.tests.util import test_config
 
@@ -70,13 +69,8 @@ class TestBase(object):
         volume = None
         if VOLUME_SUPPORT:
             volume = {'size': 1}
-        nics = None
-        shared_network = CONFIG.get('shared_network', None)
-        if shared_network:
-            nics = [{'net-id': shared_network}]
         initial = self.client.instances.create(self.name, self.flavor_id,
-                                               volume, [], [],
-                                               nics=nics)
+                                               volume, [], [])
         self.id = initial.id
         self._wait_for_active()
 

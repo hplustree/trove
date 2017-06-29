@@ -19,7 +19,6 @@ import json
 from oslo_log import log as logging
 
 from trove.common import cfg
-from trove.common.db.couchdb import models
 from trove.common import exception
 from trove.common.i18n import _
 from trove.common import instance as rd_instance
@@ -30,6 +29,7 @@ from trove.guestagent.common import operating_system
 from trove.guestagent.common.operating_system import FileMode
 from trove.guestagent.datastore.experimental.couchdb import system
 from trove.guestagent.datastore import service
+from trove.guestagent.db import models
 from trove.guestagent import pkg
 
 CONF = cfg.CONF
@@ -218,7 +218,7 @@ class CouchDBAdmin(object):
         self._admin_user()
         try:
             for item in users:
-                user = models.CouchDBUser.deserialize(item)
+                user = models.CouchDBUser.deserialize_user(item)
                 try:
                     LOG.debug("Creating user: %s." % user.name)
                     utils.execute_with_timeout(
@@ -234,7 +234,7 @@ class CouchDBAdmin(object):
                     pass
 
                 for database in user.databases:
-                    mydb = models.CouchDBSchema.deserialize(database)
+                    mydb = models.CouchDBSchema.deserialize_schema(database)
                     try:
                         LOG.debug("Granting user: %s access to database: %s."
                                   % (user.name, mydb.name))
@@ -257,7 +257,7 @@ class CouchDBAdmin(object):
 
     def delete_user(self, user):
         LOG.debug("Delete a given CouchDB user.")
-        couchdb_user = models.CouchDBUser.deserialize(user)
+        couchdb_user = models.CouchDBUser.deserialize_user(user)
         db_names = self.list_database_names()
 
         for db in db_names:
@@ -457,7 +457,7 @@ class CouchDBAdmin(object):
 
     def enable_root(self, root_pwd=None):
         '''Create admin user root'''
-        root_user = models.CouchDBUser.root(password=root_pwd)
+        root_user = models.CouchDBRootUser(password=root_pwd)
         out, err = utils.execute_with_timeout(
             system.ENABLE_ROOT %
             {'admin_name': self._admin_user().name,
@@ -486,7 +486,7 @@ class CouchDBAdmin(object):
         LOG.debug("Creating CouchDB databases.")
 
         for database in databases:
-            dbName = models.CouchDBSchema.deserialize(database).name
+            dbName = models.CouchDBSchema.deserialize_schema(database).name
             if self._is_modifiable_database(dbName):
                 LOG.debug('Creating CouchDB database %s' % dbName)
                 try:
@@ -535,7 +535,7 @@ class CouchDBAdmin(object):
 
     def delete_database(self, database):
         '''Delete the specified database.'''
-        dbName = models.CouchDBSchema.deserialize(database).name
+        dbName = models.CouchDBSchema.deserialize_schema(database).name
         if self._is_modifiable_database(dbName):
             try:
                 LOG.debug("Deleting CouchDB database: %s." % dbName)
